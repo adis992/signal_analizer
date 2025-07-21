@@ -1217,23 +1217,39 @@ class TradingDashboard {
                 let direction = 'konsolidacija';
                 let confidence = 50;
                 
-                // Adjust based na overall trend
-                if (overallTrend === 'bullish') {
-                    baseChange = Math.abs(baseChange);
-                    direction = 'rast';
-                    confidence = 60 + (bullishCount * 5);
-                } else if (overallTrend === 'bearish') {
-                    baseChange = -Math.abs(baseChange);
-                    direction = 'pad';
-                    confidence = 60 + (bearishCount * 5);
+                // Determine direction na osnovu promjene i overall trend
+                if (Math.abs(baseChange) > 0.003) { // Minimum 0.3% promjena da ne bude sve konsolidacija
+                    if (baseChange > 0) {
+                        direction = 'rast';
+                        confidence = Math.min(90, 65 + (Math.abs(baseChange) * 500));
+                    } else {
+                        direction = 'pad'; 
+                        confidence = Math.min(90, 65 + (Math.abs(baseChange) * 500));
+                    }
                 } else {
                     direction = 'konsolidacija';
                     confidence = 55 + Math.random() * 15;
                 }
                 
-                // Dodaj neki šum za duže timeframe-ove
-                if (multiplier > 1) {
-                    baseChange *= (1 + (Math.random() - 0.5) * 0.3);
+                // Override based na overall trend ako je jak
+                if (overallTrend === 'bullish' && bullishCount >= 3) {
+                    if (direction !== 'pad') { // Ne mijenjaj ako je już clear bearish
+                        direction = 'rast';
+                        baseChange = Math.max(baseChange, 0.01); // Minimum 1% za bullish
+                        confidence = Math.max(confidence, 70);
+                    }
+                } else if (overallTrend === 'bearish' && bearishCount >= 3) {
+                    if (direction !== 'rast') { // Ne mijenjaj ako je već clear bullish
+                        direction = 'pad';
+                        baseChange = Math.min(baseChange, -0.01); // Minimum 1% za bearish
+                        confidence = Math.max(confidence, 70);
+                    }
+                }
+                
+                // Dodaj volatilnost za duže timeframe-ove
+                if (multiplier > 2) {
+                    const volatilityBoost = (Math.random() - 0.5) * 0.02 * multiplier;
+                    baseChange += volatilityBoost;
                     confidence += Math.random() * 10 - 5;
                 }
                 
@@ -1287,18 +1303,53 @@ class TradingDashboard {
     }
     
     calculatePredictedChange(indicators, multiplier) {
-        // Base change na osnovu RSI
-        let change = (50 - indicators.rsi) / 500; // Normaliziraj RSI u change
+        // Kalkuliraj promjenu na osnovu kombinacije indikatora
+        let baseChange = 0;
         
-        // MACD adjustment
-        const macdStrength = Math.abs(indicators.macd.macd - indicators.macd.signal) / 100;
-        change += (Math.random() - 0.5) * macdStrength;
+        // RSI uticaj (više agresivan)
+        if (indicators.rsi < 30) {
+            baseChange += 0.05; // Jako oversold = 5% bullish
+        } else if (indicators.rsi < 40) {
+            baseChange += 0.02; // Oversold = 2% bullish  
+        } else if (indicators.rsi > 70) {
+            baseChange -= 0.05; // Jako overbought = 5% bearish
+        } else if (indicators.rsi > 60) {
+            baseChange -= 0.02; // Overbought = 2% bearish
+        } else {
+            // RSI između 40-60 = neutralno
+            baseChange += (Math.random() - 0.5) * 0.01; // ±0.5%
+        }
         
-        // Volume adjustment
-        if (indicators.volume.ratio > 1.5) change *= 1.3; // High volume amplifies
-        if (indicators.volume.ratio < 0.7) change *= 0.7; // Low volume dampens
+        // MACD signal strength
+        const macdDiff = Math.abs(indicators.macd.macd - indicators.macd.signal);
+        const macdStrength = Math.min(macdDiff / 10, 0.03); // Max 3% od MACD
         
-        return change * multiplier * (0.5 + Math.random()); // Add some randomness
+        if (indicators.macd.macd > indicators.macd.signal) {
+            baseChange += macdStrength; // Bullish crossover
+        } else if (indicators.macd.macd < indicators.macd.signal) {
+            baseChange -= macdStrength; // Bearish crossover
+        }
+        
+        // Volume amplifikator
+        if (indicators.volume.ratio > 1.5) {
+            baseChange *= 1.4; // High volume pojačava signal
+        } else if (indicators.volume.ratio < 0.7) {
+            baseChange *= 0.6; // Low volume slabi signal
+        }
+        
+        // EMA trend
+        if (indicators.ema20 > indicators.ema50) {
+            baseChange += 0.01; // Bullish trend
+        } else if (indicators.ema20 < indicators.ema50) {
+            baseChange -= 0.01; // Bearish trend
+        }
+        
+        // Dodaj timeframe multiplier
+        const finalChange = baseChange * multiplier;
+        
+        console.log(`📊 Calculated change: RSI=${indicators.rsi}, MACD=${indicators.macd.macd.toFixed(4)}, base=${baseChange.toFixed(4)}, final=${finalChange.toFixed(4)}`);
+        
+        return finalChange;
     }
     
     getBasicPredictions() {
