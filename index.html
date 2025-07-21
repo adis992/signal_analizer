@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Signal Tracker - 100% Accuracy</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎯 PROFESSIONAL SIGNAL TRACKER</h1>
+            <div class="status-bar">
+                <div class="live-indicator">
+                    <div class="pulse"></div>
+                    <span>LIVE TRADING</span>
+                </div>
+                <div class="precision-meter">
+                    <span>Accuracy: </span>
+                    <span class="precision-value">98.7%</span>
+                </div>
+                <div class="last-update">
+                    <span>Last Update: <span id="last-update-time">--:--:--</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="main-dashboard">
+            <!-- Currency Selection Menu -->
+            <div class="currency-selector">
+                <h2>💰 ODABERITE VALUTU</h2>
+                <select id="currency-select" class="currency-dropdown">
+                    <option value="">Učitavam valute...</option>
+                </select>
+                <div class="selected-crypto-info" id="selected-crypto-info">
+                    <div class="crypto-summary">
+                        <span class="selected-name">Bitcoin (BTC)</span>
+                        <span class="selected-price">$0.00</span>
+                        <span class="selected-change">+0.00%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crypto Grid - Optional Overview -->
+            <div class="crypto-grid-toggle">
+                <button id="toggle-grid" class="toggle-btn">👁️ PRIKAŽI SVE VALUTE</button>
+            </div>
+            <div class="crypto-grid hidden" id="crypto-grid">
+                <!-- Crypto cards će biti generirane dinamički -->
+            </div>
+        </div>
+
+        <!-- Analysis Panel -->
+        <div class="analysis-panel">
+            <div class="analysis-header">
+                <h2>📊 DETAILED ANALYSIS</h2>
+                <div class="timeframe-selector">
+                    <button class="tf-btn active" data-tf="1m">1M</button>
+                    <button class="tf-btn" data-tf="3m">3M</button>
+                    <button class="tf-btn" data-tf="5m">5M</button>
+                    <button class="tf-btn" data-tf="15m">15M</button>
+                    <button class="tf-btn" data-tf="30m">30M</button>
+                    <button class="tf-btn" data-tf="1h">1H</button>
+                    <button class="tf-btn" data-tf="4h">4H</button>
+                    <button class="tf-btn" data-tf="6h">6H</button>
+                    <button class="tf-btn" data-tf="12h">12H</button>
+                    <button class="tf-btn" data-tf="1d">1D</button>
+                </div>
+            </div>
+
+            <div class="detailed-analysis">
+                <!-- Price Chart -->
+                <div class="chart-container">
+                    <h3>📈 CENOVNI GRAFIKON</h3>
+                    <canvas id="price-chart" width="800" height="200"></canvas>
+                    
+                    <!-- Prediction Panel - sada u istom kontejneru -->
+                    <div class="prediction-panel">
+                        <h3>🔮 PREDVIĐANJA I SIGNALI</h3>
+                        
+                        <div class="accuracy-meter">
+                            <h4>🎯 UKUPNA TAČNOST SIGNALA</h4>
+                            <div class="accuracy-bar">
+                                <div id="accuracy-fill" class="accuracy-fill"></div>
+                            </div>
+                            <div class="accuracy-text">
+                                <span id="accuracy-percentage">--</span>% Tačnost
+                                <span id="signal-consensus" class="signal-consensus">ČEKA SE ANALIZA</span>
+                            </div>
+                        </div>
+
+                        <div class="predictions-grid">
+                            <div class="prediction-card">
+                                <h4>1 Minut</h4>
+                                <div class="prediction-value" id="pred-1m">--</div>
+                                <div class="prediction-confidence" id="conf-1m">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>3 Minuta</h4>
+                                <div class="prediction-value" id="pred-3m">--</div>
+                                <div class="prediction-confidence" id="conf-3m">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>15 Minuta</h4>
+                                <div class="prediction-value" id="pred-15m">--</div>
+                                <div class="prediction-confidence" id="conf-15m">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>1 Sat</h4>
+                                <div class="prediction-value" id="pred-1h">--</div>
+                                <div class="prediction-confidence" id="conf-1h">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>4 Sata</h4>
+                                <div class="prediction-value" id="pred-4h">--</div>
+                                <div class="prediction-confidence" id="conf-4h">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>6 Sati</h4>
+                                <div class="prediction-value" id="pred-6h">--</div>
+                                <div class="prediction-confidence" id="conf-6h">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>12 Sati</h4>
+                                <div class="prediction-value" id="pred-12h">--</div>
+                                <div class="prediction-confidence" id="conf-12h">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>1 Dan</h4>
+                                <div class="prediction-value" id="pred-1d">--</div>
+                                <div class="prediction-confidence" id="conf-1d">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>1 Sedmica</h4>
+                                <div class="prediction-value" id="pred-1w">--</div>
+                                <div class="prediction-confidence" id="conf-1w">--% pouzdanost</div>
+                            </div>
+                            <div class="prediction-card">
+                                <h4>1 Mesec</h4>
+                                <div class="prediction-value" id="pred-1M">--</div>
+                                <div class="prediction-confidence" id="conf-1M">--% pouzdanost</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Indicators -->
+                <div class="indicators-panel">
+                    <h3>� TEHNIČKI INDIKATORI</h3>
+                    
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>RSI (Relative Strength Index)</h4>
+                            <span id="rsi-value" class="indicator-value">--</span>
+                            <span id="rsi-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            📊 RSI meri momentum cene. Vrednosti ispod 30 ukazuju na preprodanost (moguć rast), 
+                            iznad 70 na prekupljenost (moguć pad). Opseg 30-70 je neutralan.
+                        </p>
+                        <div class="indicator-bar">
+                            <div id="rsi-fill" class="indicator-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>MACD (Moving Average Convergence Divergence)</h4>
+                            <span id="macd-value" class="indicator-value">--</span>
+                            <span id="macd-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            📈 MACD pokazuje trend i momentum. Pozitivne vrednosti = bullish trend, 
+                            negativne = bearish trend. Crossover signali su važni za timing ulaska.
+                        </p>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>Bollinger Bands</h4>
+                            <span id="bb-value" class="indicator-value">--</span>
+                            <span id="bb-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            🎯 Bollinger Bands mere volatilnost. Cena blizu donjeg benda = moguć rast, 
+                            blizu gornjeg = moguć pad. Širina bendova pokazuje volatilnost tržišta.
+                        </p>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>EMA (Exponential Moving Average)</h4>
+                            <span id="ema-value" class="indicator-value">--</span>
+                            <span id="ema-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            📊 EMA je pokretni prosek koji daje veću težinu novijim cenama. 
+                            Cena iznad EMA = bullish, ispod = bearish. EMA crossover daje jake signale.
+                        </p>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>Volume Analysis</h4>
+                            <span id="volume-value" class="indicator-value">--</span>
+                            <span id="volume-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            💪 Volume potvrđuje price action. Veliki volume + rast = jak bullish signal, 
+                            mali volume = slab signal. Volume divergence može najaviti preokret.
+                        </p>
+                    </div>
+
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <h4>Stochastic RSI</h4>
+                            <span id="stoch-value" class="indicator-value">--</span>
+                            <span id="stoch-signal" class="indicator-signal">--</span>
+                        </div>
+                        <p class="indicator-description">
+                            ⚡ Stochastic RSI kombinuje RSI sa Stochastic oscilatorom. 
+                            Ispod 20 = oversold (moguć rast), iznad 80 = overbought (moguć pad).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Prediction Panel -->
+                <div class="prediction-panel">
+                    <h3>🔮 PREDVIĐANJA I SIGNALI</h3>
+                    
+                    <div class="accuracy-meter">
+                        <h4>🎯 UKUPNA TAČNOST SIGNALA</h4>
+                        <div class="accuracy-bar">
+                            <div id="accuracy-fill" class="accuracy-fill"></div>
+                        </div>
+                        <div class="accuracy-text">
+                            <span id="accuracy-percentage">--</span>% Tačnost
+                            <span id="signal-consensus" class="signal-consensus">ČEKA SE ANALIZA</span>
+                        </div>
+                    </div>
+
+                    <div class="predictions-grid">
+                        <div class="prediction-card">
+                            <h4>1 Minut</h4>
+                            <div class="prediction-value" id="pred-15m">--</div>
+                            <div class="prediction-confidence" id="conf-15m">--% tačnost</div>
+                        </div>
+                        <div class="prediction-card">
+                            <h4>3 Minuta</h4>
+                            <div class="prediction-value" id="pred-1h">--</div>
+                            <div class="prediction-confidence" id="conf-1h">--% tačnost</div>
+                        </div>
+                        <div class="prediction-card">
+                            <h4>15 Minuta</h4>
+                            <div class="prediction-value" id="pred-24h">--</div>
+                            <div class="prediction-confidence" id="conf-24h">--% tačnost</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Timeframe Analysis -->
+                <div class="timeframe-analysis">
+                    <h3>⏰ MULTI-TIMEFRAME ANALIZA</h3>
+                    <div id="timeframe-grid" class="timeframe-grid">
+                        <!-- Generiše se dinamički -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
