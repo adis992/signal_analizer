@@ -10,6 +10,13 @@ class TradingDashboard {
         this.predictionUpdateInterval = null;
         this.predictionRefreshRate = localStorage.getItem('predictionRefreshRate') || '1h'; // 15min, 30min, 1h, 1d
         
+        // Initialize prediction tracking
+        this.currentPredictions = null;
+        this.refreshIntervals = [];
+        this.intelligentRefreshActive = false;
+        this.predictionHistory = {};
+        this.loadPredictionHistory();
+        
         // Lista popularnih crypto parova + DOGE za Tarika! 😂
         this.cryptoSymbols = [
             'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
@@ -35,6 +42,18 @@ class TradingDashboard {
         };
         
         this.init();
+    }
+
+    loadPredictionHistory() {
+        const saved = localStorage.getItem('predictionHistory');
+        if (saved) {
+            try {
+                this.predictionHistory = JSON.parse(saved);
+            } catch (error) {
+                console.error('Greška pri učitavanju prediction history:', error);
+                this.predictionHistory = {};
+            }
+        }
     }
 
     async init() {
@@ -67,51 +86,71 @@ class TradingDashboard {
     }
 
     setupPredictionRefresh() {
-        // Setup auto-refresh za predviđanja
-        this.startPredictionRefresh();
+        // Setup auto-refresh za predviđanja sa logičkim intervalima
+        this.predictionHistory = JSON.parse(localStorage.getItem('predictionHistory') || '{}');
+        this.startIntelligentPredictionRefresh();
         
-        // Dodaj UI kontrole za refresh rate
+        // Dodaj UI kontrole samo jednom
         this.addPredictionRefreshControls();
     }
 
-    startPredictionRefresh() {
+    startIntelligentPredictionRefresh() {
         // Clear postojeći interval
         if (this.predictionUpdateInterval) {
             clearInterval(this.predictionUpdateInterval);
         }
         
-        // Odredi interval u milisekundama
-        const intervals = {
-            '15min': 15 * 60 * 1000,
-            '30min': 30 * 60 * 1000,
-            '1h': 60 * 60 * 1000,
-            '1d': 24 * 60 * 60 * 1000
+        // Logički intervali za različite timeframe-ove
+        const timeframeIntervals = {
+            '1m': 1 * 60 * 1000,      // 1 minut
+            '3m': 3 * 60 * 1000,      // 3 minuta  
+            '15m': 15 * 60 * 1000,    // 15 minuta
+            '1h': 60 * 60 * 1000,     // 1 sat
+            '4h': 4 * 60 * 60 * 1000, // 4 sata
+            '6h': 6 * 60 * 60 * 1000, // 6 sati
+            '12h': 12 * 60 * 60 * 1000, // 12 sati
+            '1d': 24 * 60 * 60 * 1000,  // 1 dan
+            '1w': 7 * 24 * 60 * 60 * 1000, // 1 sedmica
+            '1M': 30 * 24 * 60 * 60 * 1000 // 1 mesec
         };
         
-        const intervalMs = intervals[this.predictionRefreshRate] || intervals['1h'];
+        // Pokretaj refresh za svaki timeframe pojedinačno
+        Object.keys(timeframeIntervals).forEach(timeframe => {
+            const intervalMs = timeframeIntervals[timeframe];
+            
+            setInterval(() => {
+                console.log(`🔄 Auto-ažuriranje ${timeframe} predviđanja...`);
+                this.updateSpecificTimeframePrediction(timeframe);
+                this.trackPredictionAccuracy(timeframe);
+            }, intervalMs);
+        });
         
-        console.log(`⏰ Prediction auto-refresh postavljen na ${this.predictionRefreshRate}`);
-        
-        // Postavi interval
-        this.predictionUpdateInterval = setInterval(() => {
-            console.log('🔄 Auto-ažuriranje predviđanja...');
-            this.generateAndUpdatePredictions();
-        }, intervalMs);
+        console.log('⏰ Intelligent prediction refresh pokrenut za sve timeframe-ove');
     }
 
     addPredictionRefreshControls() {
-        // Dodaj kontrole za refresh rate u predictions panel
+        // Proverava da li kontrole već postoje
+        if (document.getElementById('prediction-refresh-rate')) {
+            console.log('⚠️ Prediction refresh kontrole već postoje, preskačem dodavanje');
+            return;
+        }
+        
+        // Dodaj kontrole za refresh rate u predictions panel - SAMO JEDNOM
         const predictionsPanel = document.querySelector('.predictions-panel');
-        if (predictionsPanel) {
+        if (predictionsPanel && !predictionsPanel.querySelector('.prediction-refresh-controls')) {
             const controlsHTML = `
                 <div class="prediction-refresh-controls">
-                    <label>🔄 Auto-refresh predviđanja:</label>
+                    <label>🔄 Automatsko ažuriranje:</label>
                     <select id="prediction-refresh-rate" class="refresh-rate-select">
-                        <option value="15min">Svakkih 15 minuta</option>
-                        <option value="30min">Svakikh 30 minuta</option>
-                        <option value="1h" selected>Svaki sat</option>
-                        <option value="1d">Jednom dnevno</option>
+                        <option value="intelligent" selected>📊 Pametno (po timeframe-u)</option>
+                        <option value="15min">⚡ Svakkih 15 minuta</option>
+                        <option value="30min">🔄 Svakkih 30 minuta</option>
+                        <option value="1h">⏰ Svaki sat</option>
+                        <option value="1d">📅 Jednom dnevno</option>
                     </select>
+                    <div class="refresh-status" id="refreshStatus">
+                        ✅ Pametno ažuriranje aktivno - svaki timeframe se ažurira logički
+                    </div>
                 </div>
             `;
             
@@ -121,15 +160,43 @@ class TradingDashboard {
             // Setup event listener
             const refreshSelect = document.getElementById('prediction-refresh-rate');
             if (refreshSelect) {
-                refreshSelect.value = this.predictionRefreshRate;
                 refreshSelect.addEventListener('change', (e) => {
                     this.predictionRefreshRate = e.target.value;
                     localStorage.setItem('predictionRefreshRate', this.predictionRefreshRate);
-                    this.startPredictionRefresh();
-                    console.log(`✅ Prediction refresh rate promenjen na: ${this.predictionRefreshRate}`);
+                    
+                    if (e.target.value === 'intelligent') {
+                        this.startIntelligentPredictionRefresh();
+                        document.getElementById('refreshStatus').textContent = '✅ Pametno ažuriranje aktivno - svaki timeframe se ažurira logički';
+                    } else {
+                        this.startLegacyPredictionRefresh();
+                        document.getElementById('refreshStatus').textContent = `🔄 Ažuriranje svih predviđanja svakih ${e.target.value}`;
+                    }
+                    
+                    console.log(`✅ Prediction refresh mode promenjen na: ${e.target.value}`);
                 });
             }
         }
+    }
+
+    startLegacyPredictionRefresh() {
+        // Clear postojeći interval
+        if (this.predictionUpdateInterval) {
+            clearInterval(this.predictionUpdateInterval);
+        }
+        
+        const intervals = {
+            '15min': 15 * 60 * 1000,
+            '30min': 30 * 60 * 1000,
+            '1h': 60 * 60 * 1000,
+            '1d': 24 * 60 * 60 * 1000
+        };
+        
+        const intervalMs = intervals[this.predictionRefreshRate] || intervals['1h'];
+        
+        this.predictionUpdateInterval = setInterval(() => {
+            console.log('🔄 Legacy ažuriranje svih predviđanja...');
+            this.generateAndUpdateAllPredictions();
+        }, intervalMs);
     }
 
     updateTime() {
@@ -375,8 +442,60 @@ class TradingDashboard {
     }
 
     generateTechnicalAnalysis(symbol) {
-        // Generiši realističnu simulaciju tehničke analize
-        const price = 30000 + Math.random() * 40000;
+        // Generiši realističnu simulaciju tehničke analize sa stvarnom cenom valute
+        let basePrice = 0;
+        
+        // Koristi stvarnu cenu iz cryptoData ako postoji
+        if (this.cryptoData[symbol]) {
+            basePrice = this.cryptoData[symbol].price;
+        } else {
+            // Fallback - realistične cene za različite valute
+            const priceRanges = {
+                'BTCUSDT': [65000, 75000],     // Bitcoin
+                'ETHUSDT': [2800, 3200],       // Ethereum  
+                'BNBUSDT': [600, 700],         // BNB
+                'SOLUSDT': [140, 180],         // Solana
+                'XRPUSDT': [0.50, 0.60],       // XRP
+                'ADAUSDT': [0.35, 0.45],       // Cardano
+                'DOTUSDT': [7, 9],             // Polkadot
+                'LINKUSDT': [14, 18],          // Chainlink
+                'LTCUSDT': [80, 100],          // Litecoin
+                'BCHUSDT': [450, 550],         // Bitcoin Cash
+                'XLMUSDT': [0.11, 0.13],       // Stellar
+                'UNIUSDT': [8, 12],            // Uniswap
+                'VETUSDT': [0.025, 0.035],     // VeChain
+                'TRXUSDT': [0.11, 0.13],       // Tron
+                'FILUSDT': [4, 6],             // Filecoin
+                'AAVEUSDT': [90, 110],         // Aave
+                'MATICUSDT': [0.85, 1.15],     // Polygon
+                'ATOMUSDT': [8, 10],           // Cosmos
+                'NEARUSDT': [4, 6],            // Near Protocol
+                'AVAXUSDT': [35, 45],          // Avalanche
+                'FTMUSDT': [0.70, 0.90],       // Fantom
+                'ALGOUSDT': [0.15, 0.25],      // Algorand
+                'ICPUSDT': [10, 14],           // Internet Computer
+                'SANDUSDT': [0.45, 0.55],      // The Sandbox
+                'MANAUSDT': [0.40, 0.50],      // Decentraland
+                'AXSUSDT': [6, 8],             // Axie Infinity
+                'THETAUSDT': [1.8, 2.2],       // Theta Network
+                'MKRUSDT': [2400, 2800],       // Maker
+                'COMPUSDT': [55, 75],          // Compound
+                'SUSHIUSDT': [0.90, 1.10],     // SushiSwap
+                'YFIUSDT': [6000, 8000],       // Yearn.finance
+                'CRVUSDT': [0.40, 0.50],       // Curve DAO
+                'SNXUSDT': [2.5, 3.5],         // Synthetix
+                '1INCHUSDT': [0.35, 0.45],     // 1inch
+                'ENJUSDT': [0.25, 0.35],       // Enjin Coin
+                'DOGEUSDT': [0.08, 0.12]       // Dogecoin
+            };
+            
+            const range = priceRanges[symbol] || [1, 100]; // Default fallback
+            basePrice = range[0] + Math.random() * (range[1] - range[0]);
+        }
+        
+        // Dodaj mali random movement (±2%)
+        const priceVariation = 0.98 + Math.random() * 0.04; // 0.98 to 1.02
+        const price = basePrice * priceVariation;
         
         return {
             price: price,
@@ -466,8 +585,39 @@ class TradingDashboard {
     }
 
     generateChartData(symbol) {
-        // Generiši realistic chart podatke
-        const basePrice = 30000 + Math.random() * 40000;
+        // Generiši realistic chart podatke sa tačnom cenom za valutu
+        let basePrice = 0;
+        
+        // Koristi stvarnu cenu iz cryptoData ako postoji
+        if (this.cryptoData[symbol]) {
+            basePrice = this.cryptoData[symbol].price;
+        } else {
+            // Fallback - realistične cene za različite valute (iste kao u generateTechnicalAnalysis)
+            const priceRanges = {
+                'BTCUSDT': [65000, 75000],     'ETHUSDT': [2800, 3200],
+                'BNBUSDT': [600, 700],         'SOLUSDT': [140, 180],
+                'XRPUSDT': [0.50, 0.60],       'ADAUSDT': [0.35, 0.45],
+                'DOTUSDT': [7, 9],             'LINKUSDT': [14, 18],
+                'LTCUSDT': [80, 100],          'BCHUSDT': [450, 550],
+                'XLMUSDT': [0.11, 0.13],       'UNIUSDT': [8, 12],
+                'VETUSDT': [0.025, 0.035],     'TRXUSDT': [0.11, 0.13],
+                'FILUSDT': [4, 6],             'AAVEUSDT': [90, 110],
+                'MATICUSDT': [0.85, 1.15],     'ATOMUSDT': [8, 10],
+                'NEARUSDT': [4, 6],            'AVAXUSDT': [35, 45],
+                'FTMUSDT': [0.70, 0.90],       'ALGOUSDT': [0.15, 0.25],
+                'ICPUSDT': [10, 14],           'SANDUSDT': [0.45, 0.55],
+                'MANAUSDT': [0.40, 0.50],      'AXSUSDT': [6, 8],
+                'THETAUSDT': [1.8, 2.2],       'MKRUSDT': [2400, 2800],
+                'COMPUSDT': [55, 75],          'SUSHIUSDT': [0.90, 1.10],
+                'YFIUSDT': [6000, 8000],       'CRVUSDT': [0.40, 0.50],
+                'SNXUSDT': [2.5, 3.5],         '1INCHUSDT': [0.35, 0.45],
+                'ENJUSDT': [0.25, 0.35],       'DOGEUSDT': [0.08, 0.12]
+            };
+            
+            const range = priceRanges[symbol] || [1, 100];
+            basePrice = range[0] + Math.random() * (range[1] - range[0]);
+        }
+        
         const labels = [];
         const prices = [];
         
@@ -476,8 +626,9 @@ class TradingDashboard {
             time.setHours(time.getHours() - i);
             labels.push(time.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }));
             
-            const variation = (Math.random() - 0.5) * basePrice * 0.02;
-            prices.push(basePrice + variation);
+            // Realističke varijacije za chart (±3% od base cene)
+            const variation = (Math.random() - 0.5) * basePrice * 0.06;
+            prices.push(Math.max(0, basePrice + variation)); // Avoid negative prices
         }
         
         return {
@@ -732,7 +883,7 @@ class TradingDashboard {
         // Generiši glavni ukupni signal
         this.updateMainSignal(predictions);
         
-        // Svi timeframe elementi
+        // Svi timeframe elementi sa boljim prikazom
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
         
         timeframes.forEach((tf, index) => {
@@ -742,80 +893,265 @@ class TradingDashboard {
             if (predElement && confElement && predictions[tf]) {
                 const p = predictions[tf];
                 const directionText = this.translateDirection(p.direction);
-                predElement.textContent = `${directionText} ${p.changePercent.toFixed(2)}%`;
-                confElement.textContent = `${p.confidence.toFixed(1)}% pouzdanost`;
+                
+                // Dodaj informacije o sledećem ažuriranju
+                const nextUpdate = this.getNextUpdateTime(tf);
+                
+                predElement.innerHTML = `
+                    ${directionText} ${p.changePercent.toFixed(2)}%
+                    <small style="display: block; opacity: 0.7; font-size: 11px;">
+                        ⏰ Sledeće: ${nextUpdate}
+                    </small>
+                `;
+                
+                confElement.innerHTML = `
+                    ${p.confidence.toFixed(1)}% pouzdanost
+                    <small style="display: block; opacity: 0.7; font-size: 10px;">
+                        📊 Tačnost: ${this.getTimeframeAccuracy(tf)}%
+                    </small>
+                `;
+                
                 predElement.className = `prediction-value ${p.direction.toLowerCase()}`;
+                
+                // Dodaj indikator za svež/zastarel signal
+                const age = this.getSignalAge(tf);
+                if (age > this.getTimeframeInterval(tf)) {
+                    predElement.classList.add('stale-signal');
+                } else {
+                    predElement.classList.remove('stale-signal');
+                }
             }
         });
     }
 
-    updateMainSignal(predictions) {
-        const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
-        let totalRast = 0;
-        let totalPad = 0;
-        let totalConfidence = 0;
-        let count = 0;
-        let weights = [0.5, 0.8, 1.2, 1.8, 2.5, 3.0, 3.5, 4.0, 3.8, 3.2]; // Različite težine za timeframe-ove
+    updateSpecificTimeframePrediction(timeframe) {
+        // Ažuriraj samo specifičan timeframe
+        const prediction = this.generateTimeframePrediction(timeframe);
         
-        // Analiziraj sve predictions
-        timeframes.forEach((tf, index) => {
-            if (predictions[tf]) {
-                const pred = predictions[tf];
-                const weight = weights[index];
-                
-                if (pred.direction === 'rast') {
-                    totalRast += pred.confidence * weight;
-                } else if (pred.direction === 'pad') {
-                    totalPad += pred.confidence * weight;
-                }
-                
-                totalConfidence += pred.confidence * weight;
-                count += weight;
-            }
-        });
+        const predElement = document.getElementById(`pred-${timeframe}`);
+        const confElement = document.getElementById(`conf-${timeframe}`);
         
-        // Odredi glavni signal
-        let mainSignal, mainIcon, mainConfidence, mainDescription;
-        
-        const rastPercentage = (totalRast / count);
-        const padPercentage = (totalPad / count);
-        const avgConfidence = (totalConfidence / count);
-        
-        if (rastPercentage > padPercentage + 10) {
-            mainSignal = "📈 GLAVNO PREDVIĐANJE: RAST";
-            mainIcon = "🚀";
-            mainDescription = `Konsenzus ${timeframes.length} analiza preporučuje KUPOVINU. Snažan signal za ulazak.`;
-        } else if (padPercentage > rastPercentage + 10) {
-            mainSignal = "📉 GLAVNO PREDVIĐANJE: PAD";
-            mainIcon = "📉";
-            mainDescription = `Konsenzus ${timeframes.length} analiza preporučuje PRODAJU ili IZLAZAK. Oprez!`;
-        } else {
-            mainSignal = "⚠️ GLAVNO PREDVIĐANJE: ČEKAJ";
-            mainIcon = "⏸️";
-            mainDescription = `Kontradiktorna predviđanja. Preporučuje se ČEKANJE za jasniji signal.`;
+        if (predElement && confElement) {
+            const directionText = this.translateDirection(prediction.direction);
+            const nextUpdate = this.getNextUpdateTime(timeframe);
+            
+            predElement.innerHTML = `
+                ${directionText} ${prediction.changePercent.toFixed(2)}%
+                <small style="display: block; opacity: 0.7; font-size: 11px;">
+                    🆕 Upravo ažurirano | ⏰ Sledeće: ${nextUpdate}
+                </small>
+            `;
+            
+            confElement.innerHTML = `
+                ${prediction.confidence.toFixed(1)}% pouzdanost
+                <small style="display: block; opacity: 0.7; font-size: 10px;">
+                    📊 Tačnost: ${this.getTimeframeAccuracy(timeframe)}%
+                </small>
+            `;
+            
+            predElement.className = `prediction-value ${prediction.direction.toLowerCase()} fresh-signal`;
+            
+            // Ukloni fresh-signal klasu posle 30 sekundi
+            setTimeout(() => {
+                predElement.classList.remove('fresh-signal');
+            }, 30000);
         }
         
-        mainConfidence = Math.min(95, Math.max(55, avgConfidence));
+        // Sačuvaj prediction za tracking
+        this.savePredictionForTracking(timeframe, prediction);
+    }
+
+    generateTimeframePrediction(timeframe) {
+        // Generiši prediction specifičan za timeframe
+        const timeframeMultipliers = {
+            '1m': 0.1,   '3m': 0.2,   '15m': 0.4,  '1h': 0.8,   '4h': 1.2,
+            '6h': 1.5,   '12h': 2.0,  '1d': 3.0,   '1w': 5.0,   '1M': 8.0
+        };
         
-        // Ažuriraj DOM elemente
+        const multiplier = timeframeMultipliers[timeframe] || 1.0;
+        const baseVolatility = 0.1 + Math.random() * 0.8;
+        const change = (Math.random() - 0.5) * baseVolatility * multiplier;
+        
+        let direction = 'rast';
+        let confidence = 70 + Math.random() * 25;
+        
+        if (change < -0.1) direction = 'pad';
+        else if (Math.abs(change) < 0.05) {
+            direction = Math.random() > 0.5 ? 'konsolidacija' : 'bočno';
+            confidence = 60 + Math.random() * 20;
+        }
+        
+        return {
+            direction: direction,
+            changePercent: Math.abs(change),
+            confidence: confidence,
+            timestamp: Date.now(),
+            timeframe: timeframe
+        };
+    }
+
+    getNextUpdateTime(timeframe) {
+        const intervals = {
+            '1m': '1min',   '3m': '3min',   '15m': '15min',  '1h': '1sat',
+            '4h': '4sata',  '6h': '6sati',  '12h': '12sati', '1d': '24sata',
+            '1w': '7dana',  '1M': '30dana'
+        };
+        return intervals[timeframe] || 'nepoznato';
+    }
+
+    getTimeframeInterval(timeframe) {
+        const intervals = {
+            '1m': 1 * 60 * 1000,      '3m': 3 * 60 * 1000,      '15m': 15 * 60 * 1000,
+            '1h': 60 * 60 * 1000,     '4h': 4 * 60 * 60 * 1000, '6h': 6 * 60 * 60 * 1000,
+            '12h': 12 * 60 * 60 * 1000, '1d': 24 * 60 * 60 * 1000, '1w': 7 * 24 * 60 * 60 * 1000,
+            '1M': 30 * 24 * 60 * 60 * 1000
+        };
+        return intervals[timeframe] || 60000;
+    }
+
+    getSignalAge(timeframe) {
+        const lastUpdate = localStorage.getItem(`lastUpdate_${timeframe}`);
+        if (!lastUpdate) return 0;
+        return Date.now() - parseInt(lastUpdate);
+    }
+
+    trackPredictionAccuracy(timeframe) {
+        // Proveri tačnost prethodnih predviđanja
+        if (!this.predictionHistory[timeframe]) {
+            this.predictionHistory[timeframe] = [];
+        }
+        
+        const history = this.predictionHistory[timeframe];
+        if (history.length > 0) {
+            const lastPrediction = history[history.length - 1];
+            if (lastPrediction && !lastPrediction.verified) {
+                // Proveri da li se predviđanje ostvarilo
+                const actualChange = this.getActualPriceChange(timeframe, lastPrediction.timestamp);
+                const predicted = lastPrediction.direction === 'rast' ? 1 : lastPrediction.direction === 'pad' ? -1 : 0;
+                const actual = actualChange > 0.1 ? 1 : actualChange < -0.1 ? -1 : 0;
+                
+                lastPrediction.verified = true;
+                lastPrediction.correct = predicted === actual;
+                lastPrediction.actualChange = actualChange;
+                
+                console.log(`📊 Verifikacija ${timeframe}: ${lastPrediction.correct ? '✅ Tačno' : '❌ Netačno'}`);
+            }
+        }
+        
+        this.savePredictionHistory();
+    }
+
+    getActualPriceChange(timeframe, timestamp) {
+        // Simulira stvarnu promenu cene (u realnoj implementaciji bi koristio pravi API)
+        return (Math.random() - 0.5) * 2; // -1 do 1
+    }
+
+    getTimeframeAccuracy(timeframe) {
+        if (!this.predictionHistory[timeframe]) return 'N/A';
+        
+        const history = this.predictionHistory[timeframe];
+        const verified = history.filter(p => p.verified);
+        const correct = verified.filter(p => p.correct);
+        
+        if (verified.length === 0) return 'N/A';
+        
+        const accuracy = (correct.length / verified.length) * 100;
+        return accuracy.toFixed(1);
+    }
+
+    savePredictionForTracking(timeframe, prediction) {
+        if (!this.predictionHistory[timeframe]) {
+            this.predictionHistory[timeframe] = [];
+        }
+        
+        this.predictionHistory[timeframe].push(prediction);
+        
+        // Zadrži samo poslednjih 50 predviđanja
+        if (this.predictionHistory[timeframe].length > 50) {
+            this.predictionHistory[timeframe] = this.predictionHistory[timeframe].slice(-50);
+        }
+        
+        this.savePredictionHistory();
+        localStorage.setItem(`lastUpdate_${timeframe}`, Date.now().toString());
+    }
+
+    savePredictionHistory() {
+        localStorage.setItem('predictionHistory', JSON.stringify(this.predictionHistory));
+    }
+
+    generateAndUpdateAllPredictions() {
+        // Legacy function za ažuriranje svih odjednom
+        const predictions = this.generateSmartPredictions();
+        this.updatePredictions(predictions);
+    }
+
+    updateMainSignal(predictions) {
+        // Generiši detaljni glavni signal
+        const currentPrice = this.getCurrentPrice(); // Will add this method
+        const detailedSignal = this.generateDetailedMainSignal(predictions, currentPrice);
+        
+        // Ažuriraj DOM elemente sa detaljnim informacijama
         const signalElement = document.getElementById('main-signal');
         if (signalElement) {
-            const iconEl = signalElement.querySelector('.signal-icon');
-            const textEl = signalElement.querySelector('.signal-text');
-            const confidenceEl = signalElement.querySelector('.signal-confidence');
-            const descriptionEl = signalElement.querySelector('.signal-description');
-            
-            if (iconEl) iconEl.textContent = mainIcon;
-            if (textEl) textEl.textContent = mainSignal;
-            if (confidenceEl) confidenceEl.textContent = `${mainConfidence.toFixed(1)}% pouzdanost`;
-            if (descriptionEl) descriptionEl.textContent = mainDescription;
+            // Proširi glavni signal sa više informacija
+            signalElement.innerHTML = `
+                <div class="signal-icon">${detailedSignal.icon}</div>
+                <div class="signal-main">
+                    <div class="signal-text">${detailedSignal.icon} GLAVNO PREDVIĐANJE: ${detailedSignal.direction}</div>
+                    <div class="signal-confidence">${detailedSignal.confidence.toFixed(1)}% pouzdanost</div>
+                </div>
+                <div class="signal-details">
+                    <div class="price-prediction">
+                        <strong>📊 Očekivana cena:</strong> $${detailedSignal.expectedPrice.toFixed(2)}
+                        <span class="price-change">(${detailedSignal.direction === 'PAD' ? '-' : '+'}${detailedSignal.percentChange.toFixed(1)}%)</span>
+                    </div>
+                    <div class="time-prediction">
+                        <strong>⏰ Vreme do promene:</strong> ${detailedSignal.timeToChange}
+                    </div>
+                    <div class="levels-prediction">
+                        <strong>📈 Resistance:</strong> $${detailedSignal.resistanceLevel.toFixed(2)} | 
+                        <strong>📉 Support:</strong> $${detailedSignal.supportLevel.toFixed(2)}
+                    </div>
+                    <div class="analysis-summary">
+                        <strong>🔍 Analiza:</strong> ${detailedSignal.analysis}
+                    </div>
+                </div>
+                <div class="signal-description">
+                    <strong>💡 Preporuka:</strong> ${detailedSignal.recommendation} - 
+                    ${detailedSignal.direction === 'PAD' ? 
+                        `Očekuje se pad do $${detailedSignal.expectedPrice.toFixed(2)} u narednih ${detailedSignal.timeToChange}` :
+                        detailedSignal.direction === 'RAST' ? 
+                        `Očekuje se rast do $${detailedSignal.expectedPrice.toFixed(2)} u narednih ${detailedSignal.timeToChange}` :
+                        'Čekajte jasniji signal pre donošenja odluke'}
+                </div>
+            `;
             
             // Dodaj odgovarajuću klasu za styling
-            signalElement.className = 'main-signal';
-            if (mainSignal.includes('RAST')) signalElement.classList.add('bullish');
-            else if (mainSignal.includes('PAD')) signalElement.classList.add('bearish');
+            signalElement.className = 'main-signal detailed';
+            if (detailedSignal.direction === 'RAST') signalElement.classList.add('bullish');
+            else if (detailedSignal.direction === 'PAD') signalElement.classList.add('bearish');
             else signalElement.classList.add('neutral');
         }
+    }
+
+    getCurrentPrice() {
+        // Get current price from crypto data or generate realistic one
+        if (this.cryptoData && this.cryptoData[this.selectedCrypto]) {
+            return this.cryptoData[this.selectedCrypto].price;
+        }
+        
+        // Generate realistic prices based on crypto symbol
+        const priceMap = {
+            'BTCUSDT': 55000 + Math.random() * 20000,
+            'ETHUSDT': 2500 + Math.random() * 1000,
+            'BNBUSDT': 300 + Math.random() * 200,
+            'SOLUSDT': 80 + Math.random() * 60,
+            'XRPUSDT': 0.5 + Math.random() * 0.8,
+            'ADAUSDT': 0.3 + Math.random() * 0.5,
+            'DOGEUSDT': 0.05 + Math.random() * 0.1
+        };
+        
+        return priceMap[this.selectedCrypto] || 1000 + Math.random() * 500;
     }
 
     generateSmartPredictions() {
@@ -845,6 +1181,85 @@ class TradingDashboard {
         });
         
         return predictions;
+    }
+
+    generateDetailedMainSignal(predictions, currentPrice) {
+        // Analiziraj sve predictions da generiš glavni signal
+        let bullishSignals = 0;
+        let bearishSignals = 0;
+        let averageConfidence = 0;
+        let totalChange = 0;
+        
+        const timeframes = Object.keys(predictions);
+        
+        timeframes.forEach(tf => {
+            const pred = predictions[tf];
+            averageConfidence += pred.confidence;
+            
+            if (pred.direction === 'rast') {
+                bullishSignals++;
+                totalChange += pred.changePercent;
+            } else if (pred.direction === 'pad') {
+                bearishSignals++;
+                totalChange -= pred.changePercent;
+            }
+        });
+        
+        averageConfidence = averageConfidence / timeframes.length;
+        const expectedChange = totalChange / timeframes.length;
+        
+        // Generiši glavni signal
+        let mainDirection = 'konsolidacija';
+        let mainIcon = '🔄';
+        let recommendation = 'ČEKAJTE';
+        let expectedPrice = currentPrice || 55000; // Fallback price
+        
+        if (bullishSignals > bearishSignals) {
+            mainDirection = 'RAST';
+            mainIcon = '📈';
+            recommendation = 'KUPOVINU';
+            expectedPrice = expectedPrice * (1 + Math.abs(expectedChange));
+        } else if (bearishSignals > bullishSignals) {
+            mainDirection = 'PAD';
+            mainIcon = '📉';
+            recommendation = 'PRODAJU';
+            expectedPrice = expectedPrice * (1 - Math.abs(expectedChange));
+        }
+        
+        // Generiši detaljnu analizu
+        const priceChange = Math.abs(expectedPrice - (currentPrice || 55000));
+        const percentChange = Math.abs(expectedChange * 100);
+        
+        // Predvidi vremenske okvire
+        const timeToChange = this.estimateTimeToChange(bearishSignals, bullishSignals);
+        const supportLevel = (currentPrice || 55000) * 0.95;
+        const resistanceLevel = (currentPrice || 55000) * 1.05;
+        
+        return {
+            direction: mainDirection,
+            icon: mainIcon,
+            confidence: averageConfidence,
+            recommendation: recommendation,
+            expectedPrice: expectedPrice,
+            priceChange: priceChange,
+            percentChange: percentChange,
+            timeToChange: timeToChange,
+            supportLevel: supportLevel,
+            resistanceLevel: resistanceLevel,
+            totalSignals: timeframes.length,
+            bullishSignals: bullishSignals,
+            bearishSignals: bearishSignals,
+            analysis: `${bullishSignals}/${timeframes.length} signala za RAST, ${bearishSignals}/${timeframes.length} za PAD`
+        };
+    }
+
+    estimateTimeToChange(bearishSignals, bullishSignals) {
+        const strongSignals = Math.max(bearishSignals, bullishSignals);
+        
+        if (strongSignals >= 7) return '1-4 sata';
+        if (strongSignals >= 5) return '4-12 sati';  
+        if (strongSignals >= 3) return '12-24 sata';
+        return '1-3 dana';
     }
 
     translateDirection(direction) {

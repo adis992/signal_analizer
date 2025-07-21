@@ -2473,6 +2473,22 @@ body {
     transition: all 0.3s ease;
 }
 
+.prediction-value.stale-signal {
+    opacity: 0.6;
+    border-left: 3px solid #ff6b6b;
+}
+
+.prediction-value.fresh-signal {
+    animation: pulse 2s ease-in-out;
+    border-left: 3px solid #51cf66;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.02); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
 .refresh-rate-select:hover {
     border-color: #00ff88;
     background: rgba(0, 255, 136, 0.1);
