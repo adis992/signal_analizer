@@ -612,10 +612,32 @@ body {
     box-shadow: 0 5px 20px rgba(0, 255, 136, 0.1);
 }
 
+.trading-guide.minimized {
+    padding: 10px 20px;
+}
+
+.guide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.guide-header:hover {
+    opacity: 0.8;
+}
+
+.toggle-icon {
+    font-size: 1.2em;
+    transition: transform 0.3s ease;
+    color: #0066ff;
+    font-weight: bold;
+}
+
 .trading-guide h3 {
     color: #00ff88;
-    text-align: center;
-    margin-bottom: 15px;
+    margin: 0;
     font-size: 18px;
     text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
@@ -624,6 +646,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: 15px;
 }
 
 .rule {

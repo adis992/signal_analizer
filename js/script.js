@@ -351,6 +351,12 @@ class TradingDashboard {
         try {
             console.log(`📈 Učitavam detalje za ${symbol}...`);
             
+            // Ažuriraj crypto display info odmah
+            const crypto = this.cryptoData[symbol];
+            if (crypto) {
+                this.updateSelectedCryptoInfo(crypto);
+            }
+            
             // Generiši simulaciju tehničke analize
             const analysisData = this.generateTechnicalAnalysis(symbol);
             const predictions = this.generateSmartPredictions();
