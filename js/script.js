@@ -215,21 +215,12 @@ class TradingDashboard {
             
             return filteredData;
         } catch (error) {
-            console.error('Greška pri učitavanju crypto podataka:', error);
-            // Vrati mock podatke ako API ne radi
-            return this.getMockCryptoData();
+            console.error('❌ GREŠKA: Binance API nedostupan:', error);
+            throw new Error('Binance API nedostupan. Molimo pokušajte ponovo.');
         }
     }
 
-    getMockCryptoData() {
-        // Generiši mock podatke ako API ne radi
-        return this.cryptoSymbols.map(symbol => ({
-            symbol: symbol,
-            price: 30000 + Math.random() * 40000,
-            change: (Math.random() - 0.5) * 20,
-            volume: Math.random() * 1000000000
-        }));
-    }
+
 
     populateDropdown(cryptos) {
         const dropdown = document.getElementById('currency-select');
@@ -391,9 +382,9 @@ class TradingDashboard {
                 this.updateSelectedCryptoInfo(crypto);
             }
             
-            // Generiši simulaciju tehničke analize
-            const analysisData = this.generateTechnicalAnalysis(symbol);
-            const predictions = this.generateSmartPredictions();
+            // Generiši stvarnu tehničku analizu
+            const analysisData = await this.generateTechnicalAnalysis(symbol);
+            const predictions = await this.generateSmartPredictions(symbol, analysisData);
             
             console.log('📊 Podaci generisani:', { analysisData, predictions });
             
@@ -408,91 +399,154 @@ class TradingDashboard {
         }
     }
 
-    generateTechnicalAnalysis(symbol) {
-        // Generiši realističnu simulaciju tehničke analize sa stvarnom cenom valute
-        let basePrice = 0;
-        
-        // Koristi stvarnu cenu iz cryptoData ako postoji
-        if (this.cryptoData[symbol]) {
-            basePrice = this.cryptoData[symbol].price;
-        } else {
-            // Fallback - realistične cene za različite valute
-            const priceRanges = {
-                'BTCUSDT': [65000, 75000],     // Bitcoin
-                'ETHUSDT': [2800, 3200],       // Ethereum  
-                'BNBUSDT': [600, 700],         // BNB
-                'SOLUSDT': [140, 180],         // Solana
-                'XRPUSDT': [0.50, 0.60],       // XRP
-                'ADAUSDT': [0.35, 0.45],       // Cardano
-                'DOTUSDT': [7, 9],             // Polkadot
-                'LINKUSDT': [14, 18],          // Chainlink
-                'LTCUSDT': [80, 100],          // Litecoin
-                'BCHUSDT': [450, 550],         // Bitcoin Cash
-                'XLMUSDT': [0.11, 0.13],       // Stellar
-                'UNIUSDT': [8, 12],            // Uniswap
-                'VETUSDT': [0.025, 0.035],     // VeChain
-                'TRXUSDT': [0.11, 0.13],       // Tron
-                'FILUSDT': [4, 6],             // Filecoin
-                'AAVEUSDT': [90, 110],         // Aave
-                'MATICUSDT': [0.85, 1.15],     // Polygon
-                'ATOMUSDT': [8, 10],           // Cosmos
-                'NEARUSDT': [4, 6],            // Near Protocol
-                'AVAXUSDT': [35, 45],          // Avalanche
-                'FTMUSDT': [0.70, 0.90],       // Fantom
-                'ALGOUSDT': [0.15, 0.25],      // Algorand
-                'ICPUSDT': [10, 14],           // Internet Computer
-                'SANDUSDT': [0.45, 0.55],      // The Sandbox
-                'MANAUSDT': [0.40, 0.50],      // Decentraland
-                'AXSUSDT': [6, 8],             // Axie Infinity
-                'THETAUSDT': [1.8, 2.2],       // Theta Network
-                'MKRUSDT': [2400, 2800],       // Maker
-                'COMPUSDT': [55, 75],          // Compound
-                'SUSHIUSDT': [0.90, 1.10],     // SushiSwap
-                'YFIUSDT': [6000, 8000],       // Yearn.finance
-                'CRVUSDT': [0.40, 0.50],       // Curve DAO
-                'SNXUSDT': [2.5, 3.5],         // Synthetix
-                '1INCHUSDT': [0.35, 0.45],     // 1inch
-                'ENJUSDT': [0.25, 0.35],       // Enjin Coin
-                'DOGEUSDT': [0.08, 0.12]       // Dogecoin
+    async generateTechnicalAnalysis(symbol) {
+        try {
+            console.log(`📊 Učitavam stvarne tehničke indikatore za ${symbol}...`);
+            
+            // Dobij candle podatke za tehničku analizu
+            const candleResponse = await fetch(`${this.binanceApiUrl}/klines?symbol=${symbol}&interval=1h&limit=100`);
+            if (!candleResponse.ok) throw new Error('Greška pri učitavanju candle podataka');
+            
+            const candles = await candleResponse.json();
+            const closePrices = candles.map(candle => parseFloat(candle[4])); // Close prices
+            const volumes = candles.map(candle => parseFloat(candle[5])); // Volumes
+            
+            // Trenutna cena
+            const currentPrice = closePrices[closePrices.length - 1];
+            
+            // Izračunaj stvarne tehničke indikatore
+            const rsi = this.calculateRSI(closePrices);
+            const macd = this.calculateMACD(closePrices);
+            const bb = this.calculateBollingerBands(closePrices, currentPrice);
+            const ema20 = this.calculateEMA(closePrices, 20);
+            const ema50 = this.calculateEMA(closePrices, 50);
+            
+            return {
+                price: currentPrice,
+                indicators: {
+                    rsi: rsi,
+                    macd: macd,
+                    bb: bb,
+                    volume: {
+                        current: volumes[volumes.length - 1],
+                        ratio: volumes[volumes.length - 1] / (volumes.reduce((a, b) => a + b) / volumes.length)
+                    },
+                    stochRSI: this.calculateStochRSI(closePrices),
+                    ema20: ema20,
+                    ema50: ema50
+                }
             };
             
-            const range = priceRanges[symbol] || [1, 100]; // Default fallback
-            basePrice = range[0] + Math.random() * (range[1] - range[0]);
+        } catch (error) {
+            console.error('❌ Greška pri generiranju tehničke analize:', error);
+            throw new Error('Neuspjeh učitavanja tehničkih indikatora');
+        }
+    }
+    
+    calculateRSI(prices, period = 14) {
+        if (prices.length < period + 1) return 50; // Nedovoljno podataka
+        
+        const gains = [];
+        const losses = [];
+        
+        for (let i = 1; i < prices.length; i++) {
+            const change = prices[i] - prices[i - 1];
+            gains.push(change > 0 ? change : 0);
+            losses.push(change < 0 ? Math.abs(change) : 0);
         }
         
-        // Dodaj mali random movement (±2%)
-        const priceVariation = 0.98 + Math.random() * 0.04; // 0.98 to 1.02
-        const price = basePrice * priceVariation;
+        // Izračunaj proječnu dobit i gubitak
+        const avgGain = gains.slice(-period).reduce((a, b) => a + b) / period;
+        const avgLoss = losses.slice(-period).reduce((a, b) => a + b) / period;
+        
+        if (avgLoss === 0) return 100;
+        
+        const rs = avgGain / avgLoss;
+        return 100 - (100 / (1 + rs));
+    }
+    
+    calculateMACD(prices) {
+        const ema12 = this.calculateEMA(prices, 12);
+        const ema26 = this.calculateEMA(prices, 26);
+        const macdLine = ema12 - ema26;
+        
+        // Signal line je 9-period EMA od MACD linije
+        const macdHistory = [];
+        for (let i = 26; i < prices.length; i++) {
+            const ema12_i = this.calculateEMA(prices.slice(0, i + 1), 12);
+            const ema26_i = this.calculateEMA(prices.slice(0, i + 1), 26);
+            macdHistory.push(ema12_i - ema26_i);
+        }
+        
+        const signalLine = this.calculateEMA(macdHistory, 9);
         
         return {
-            price: price,
-            indicators: {
-                rsi: 30 + Math.random() * 40, // 30-70 range
-                macd: {
-                    macd: (Math.random() - 0.5) * 100,
-                    signal: (Math.random() - 0.5) * 80
-                },
-                bb: {
-                    upper: price + (price * 0.02),
-                    lower: price - (price * 0.02)
-                },
-                volume: {
-                    current: Math.random() * 1000000000,
-                    ratio: 0.5 + Math.random() * 2
-                },
-                stochRSI: Math.random() * 100,
-                ema20: price + (Math.random() - 0.5) * price * 0.01,
-                ema50: price + (Math.random() - 0.5) * price * 0.02
-            }
+            macd: macdLine,
+            signal: signalLine
         };
+    }
+    
+    calculateEMA(prices, period) {
+        if (prices.length === 0) return 0;
+        
+        const multiplier = 2 / (period + 1);
+        let ema = prices[0];
+        
+        for (let i = 1; i < prices.length; i++) {
+            ema = (prices[i] * multiplier) + (ema * (1 - multiplier));
+        }
+        
+        return ema;
+    }
+    
+    calculateBollingerBands(prices, currentPrice, period = 20, stdDev = 2) {
+        if (prices.length < period) {
+            return {
+                upper: currentPrice * 1.02,
+                lower: currentPrice * 0.98
+            };
+        }
+        
+        const recentPrices = prices.slice(-period);
+        const sma = recentPrices.reduce((a, b) => a + b) / period;
+        
+        // Standardna devijacija
+        const variance = recentPrices.reduce((acc, price) => acc + Math.pow(price - sma, 2), 0) / period;
+        const standardDeviation = Math.sqrt(variance);
+        
+        return {
+            upper: sma + (standardDeviation * stdDev),
+            lower: sma - (standardDeviation * stdDev)
+        };
+    }
+    
+    calculateStochRSI(prices, period = 14) {
+        const rsiValues = [];
+        
+        // Generiramo RSI vrednosti za poslednji period
+        for (let i = period; i < prices.length; i++) {
+            const periodPrices = prices.slice(i - period, i + 1);
+            rsiValues.push(this.calculateRSI(periodPrices, period));
+        }
+        
+        if (rsiValues.length < period) return 50;
+        
+        const recentRSI = rsiValues.slice(-period);
+        const minRSI = Math.min(...recentRSI);
+        const maxRSI = Math.max(...recentRSI);
+        const currentRSI = recentRSI[recentRSI.length - 1];
+        
+        if (maxRSI === minRSI) return 50;
+        
+        return ((currentRSI - minRSI) / (maxRSI - minRSI)) * 100;
     }
 
     async loadChart(symbol) {
         try {
-            console.log(`📈 Generiram grafikon za ${symbol}...`);
+            console.log(`📈 Učitavam STVARNI grafikon sa Binance API za ${symbol}...`);
             
-            // Generiši mock chart podatke
-            const chartData = this.generateChartData(symbol);
+            // Učitaj stvarne candle podatke sa Binance API
+            const chartData = await this.fetchChartData(symbol);
             
             const canvas = document.getElementById('price-chart');
             if (!canvas) {
@@ -515,8 +569,8 @@ class TradingDashboard {
                     plugins: {
                         title: {
                             display: true,
-                            text: `${symbol.replace('USDT', '')} - ${this.selectedTimeframe.toUpperCase()}`,
-                            color: '#ffffff',
+                            text: `${symbol.replace('USDT', '')} - ${this.selectedTimeframe.toUpperCase()} - STVARNI PODACI`,
+                            color: '#00ff88',
                             font: { size: 16, weight: 'bold' }
                         },
                         legend: {
@@ -544,73 +598,80 @@ class TradingDashboard {
                 }
             });
             
-            console.log('✅ Grafikon uspešno učitan!');
+            console.log('✅ STVARNI grafikon uspešno učitan!');
             
         } catch (error) {
             console.error('❌ Greška pri učitavanju grafikona:', error);
+            this.showError('Greška pri učitavanju grafikona. Molimo pokušajte ponovo.');
         }
     }
 
-    generateChartData(symbol) {
-        // Generiši realistic chart podatke sa tačnom cenom za valutu
-        let basePrice = 0;
-        
-        // Koristi stvarnu cenu iz cryptoData ako postoji
-        if (this.cryptoData[symbol]) {
-            basePrice = this.cryptoData[symbol].price;
-        } else {
-            // Fallback - realistične cene za različite valute (iste kao u generateTechnicalAnalysis)
-            const priceRanges = {
-                'BTCUSDT': [65000, 75000],     'ETHUSDT': [2800, 3200],
-                'BNBUSDT': [600, 700],         'SOLUSDT': [140, 180],
-                'XRPUSDT': [0.50, 0.60],       'ADAUSDT': [0.35, 0.45],
-                'DOTUSDT': [7, 9],             'LINKUSDT': [14, 18],
-                'LTCUSDT': [80, 100],          'BCHUSDT': [450, 550],
-                'XLMUSDT': [0.11, 0.13],       'UNIUSDT': [8, 12],
-                'VETUSDT': [0.025, 0.035],     'TRXUSDT': [0.11, 0.13],
-                'FILUSDT': [4, 6],             'AAVEUSDT': [90, 110],
-                'MATICUSDT': [0.85, 1.15],     'ATOMUSDT': [8, 10],
-                'NEARUSDT': [4, 6],            'AVAXUSDT': [35, 45],
-                'FTMUSDT': [0.70, 0.90],       'ALGOUSDT': [0.15, 0.25],
-                'ICPUSDT': [10, 14],           'SANDUSDT': [0.45, 0.55],
-                'MANAUSDT': [0.40, 0.50],      'AXSUSDT': [6, 8],
-                'THETAUSDT': [1.8, 2.2],       'MKRUSDT': [2400, 2800],
-                'COMPUSDT': [55, 75],          'SUSHIUSDT': [0.90, 1.10],
-                'YFIUSDT': [6000, 8000],       'CRVUSDT': [0.40, 0.50],
-                'SNXUSDT': [2.5, 3.5],         '1INCHUSDT': [0.35, 0.45],
-                'ENJUSDT': [0.25, 0.35],       'DOGEUSDT': [0.08, 0.12]
+    async fetchChartData(symbol) {
+        try {
+            // Interval mapping za različite timeframe-ove
+            const intervalMap = {
+                '1m': '1m', '5m': '5m', '15m': '15m', '30m': '30m',
+                '1h': '1h', '4h': '4h', '1d': '1d', '1w': '1w'
             };
             
-            const range = priceRanges[symbol] || [1, 100];
-            basePrice = range[0] + Math.random() * (range[1] - range[0]);
-        }
-        
-        const labels = [];
-        const prices = [];
-        
-        for (let i = 24; i >= 0; i--) {
-            const time = new Date();
-            time.setHours(time.getHours() - i);
-            labels.push(time.toLocaleTimeString('sr-RS', { hour: '2-digit', minute: '2-digit' }));
+            const interval = intervalMap[this.selectedTimeframe] || '1h';
+            const limit = this.selectedTimeframe === '1w' ? 52 : 100; // 52 weeks or 100 periods
             
-            // Realističke varijacije za chart (±3% od base cene)
-            const variation = (Math.random() - 0.5) * basePrice * 0.06;
-            prices.push(Math.max(0, basePrice + variation)); // Avoid negative prices
+            console.log(`📊 Dohvaćam Binance candle podatke: ${symbol}, interval: ${interval}, limit: ${limit}`);
+            
+            const response = await fetch(`${this.binanceApiUrl}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            const klines = await response.json();
+            
+            const labels = [];
+            const prices = [];
+            
+            klines.forEach(kline => {
+                const timestamp = parseInt(kline[0]);
+                const closePrice = parseFloat(kline[4]);
+                
+                const date = new Date(timestamp);
+                
+                // Format vremena na osnovu interval-a
+                let timeFormat;
+                if (interval === '1w') {
+                    timeFormat = date.toLocaleDateString('sr-RS');
+                } else if (interval === '1d') {
+                    timeFormat = date.toLocaleDateString('sr-RS', { month: '2-digit', day: '2-digit' });
+                } else {
+                    timeFormat = date.toLocaleTimeString('sr-RS', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        day: interval.includes('h') ? '2-digit' : undefined,
+                        month: interval.includes('h') ? '2-digit' : undefined
+                    });
+                }
+                
+                labels.push(timeFormat);
+                prices.push(closePrice);
+            });
+            
+            return {
+                labels: labels,
+                datasets: [{
+                    label: `${symbol.replace('USDT', '')} STVARNA Cena`,
+                    data: prices,
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            };
+            
+        } catch (error) {
+            console.error('❌ Greška pri dohvaćanju chart podataka:', error);
+            throw new Error('Nemoguće učitati chart podatke sa Binance API');
         }
-        
-        return {
-            labels: labels,
-            datasets: [{
-                label: `${symbol.replace('USDT', '')} Cena`,
-                data: prices,
-                borderColor: '#00ff88',
-                backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        };
     }
+
+
 
     // Sve ostale metode ostaju iste kao u originalnom fajlu
     updateTechnicalIndicators(data) {
@@ -842,7 +903,7 @@ class TradingDashboard {
 
     updatePredictions(predictions) {
         if (!predictions) {
-            predictions = this.generateSmartPredictions();
+            predictions = this.getBasicPredictions();
         }
         
         console.log('🔮 Ažuriram predviđanja:', predictions);
@@ -1048,7 +1109,7 @@ class TradingDashboard {
 
     generateAndUpdateAllPredictions() {
         // Legacy function za ažuriranje svih odjednom
-        const predictions = this.generateSmartPredictions();
+        const predictions = this.getBasicPredictions();
         this.updatePredictions(predictions);
     }
 
@@ -1121,29 +1182,130 @@ class TradingDashboard {
         return priceMap[this.selectedCrypto] || 1000 + Math.random() * 500;
     }
 
-    generateSmartPredictions() {
-        // Generiši pametnija predviđanja za sve timeframe-ove
+    async generateSmartPredictions(symbol, analysisData) {
+        try {
+            console.log(`🧠 Generiram pametan prognoza za ${symbol} na osnovu stvarnih indikatora...`);
+            
+            const { price: currentPrice, indicators } = analysisData;
+            const predictions = {};
+            const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
+            
+            // Analiziraj osnovne trendove na osnovu RSI, MACD, Bollinger Bands
+            const rsiSignal = this.getRSISignal(indicators.rsi);
+            const macdSignal = this.getMACDSignal(indicators.macd);
+            const bollingerSignal = this.getBollingerSignal(currentPrice, indicators.bb);
+            const emaSignal = this.getEMASignal(indicators.ema20, indicators.ema50);
+            
+            // Kombiniraj signale za general trend
+            const signals = [rsiSignal, macdSignal, bollingerSignal, emaSignal];
+            const bullishCount = signals.filter(s => s === 'bullish').length;
+            const bearishCount = signals.filter(s => s === 'bearish').length;
+            
+            let overallTrend = 'neutral';
+            if (bullishCount > bearishCount) overallTrend = 'bullish';
+            else if (bearishCount > bullishCount) overallTrend = 'bearish';
+            
+            // Generiraj predviđanja za različite timeframe-ove
+            timeframes.forEach((tf, index) => {
+                const multiplier = this.getTimeframeMultiplier(tf);
+                let baseChange = this.calculatePredictedChange(indicators, multiplier);
+                let direction = 'konsolidacija';
+                let confidence = 50;
+                
+                // Adjust based na overall trend
+                if (overallTrend === 'bullish') {
+                    baseChange = Math.abs(baseChange);
+                    direction = 'rast';
+                    confidence = 60 + (bullishCount * 5);
+                } else if (overallTrend === 'bearish') {
+                    baseChange = -Math.abs(baseChange);
+                    direction = 'pad';
+                    confidence = 60 + (bearishCount * 5);
+                } else {
+                    direction = 'konsolidacija';
+                    confidence = 55 + Math.random() * 15;
+                }
+                
+                // Dodaj neki šum za duže timeframe-ove
+                if (multiplier > 1) {
+                    baseChange *= (1 + (Math.random() - 0.5) * 0.3);
+                    confidence += Math.random() * 10 - 5;
+                }
+                
+                predictions[tf] = {
+                    direction: direction,
+                    changePercent: Math.abs(baseChange),
+                    confidence: Math.max(45, Math.min(95, confidence))
+                };
+            });
+            
+            return predictions;
+            
+        } catch (error) {
+            console.error('❌ Greška pri generiranju predviđanja:', error);
+            // Fallback na osnovnu analizu
+            return this.getBasicPredictions();
+        }
+    }
+    
+    getRSISignal(rsi) {
+        if (rsi > 70) return 'bearish'; // Overbought
+        if (rsi < 30) return 'bullish'; // Oversold
+        return 'neutral';
+    }
+    
+    getMACDSignal(macd) {
+        if (macd.macd > macd.signal) return 'bullish';
+        if (macd.macd < macd.signal) return 'bearish';
+        return 'neutral';
+    }
+    
+    getBollingerSignal(currentPrice, bb) {
+        if (currentPrice > bb.upper) return 'bearish'; // Price above upper band
+        if (currentPrice < bb.lower) return 'bullish'; // Price below lower band
+        return 'neutral';
+    }
+    
+    getEMASignal(ema20, ema50) {
+        if (ema20 > ema50) return 'bullish'; // Golden cross
+        if (ema20 < ema50) return 'bearish'; // Death cross
+        return 'neutral';
+    }
+    
+    getTimeframeMultiplier(timeframe) {
+        const multipliers = {
+            '1m': 0.1, '3m': 0.2, '15m': 0.3, '1h': 0.5, 
+            '4h': 0.8, '6h': 1.0, '12h': 1.3, '1d': 1.8, 
+            '1w': 2.5, '1M': 4.0
+        };
+        return multipliers[timeframe] || 1.0;
+    }
+    
+    calculatePredictedChange(indicators, multiplier) {
+        // Base change na osnovu RSI
+        let change = (50 - indicators.rsi) / 500; // Normaliziraj RSI u change
+        
+        // MACD adjustment
+        const macdStrength = Math.abs(indicators.macd.macd - indicators.macd.signal) / 100;
+        change += (Math.random() - 0.5) * macdStrength;
+        
+        // Volume adjustment
+        if (indicators.volume.ratio > 1.5) change *= 1.3; // High volume amplifies
+        if (indicators.volume.ratio < 0.7) change *= 0.7; // Low volume dampens
+        
+        return change * multiplier * (0.5 + Math.random()); // Add some randomness
+    }
+    
+    getBasicPredictions() {
+        // Jednostavan fallback
         const predictions = {};
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
         
         timeframes.forEach((tf, index) => {
-            const multiplier = (index + 1) * 0.3; // Veći timeframe = veća potencijalna promena
-            const baseVolatility = 0.2 + Math.random() * 1.5;
-            const change = (Math.random() - 0.5) * baseVolatility * multiplier;
-            
-            let direction = 'rast';
-            let confidence = 65 + Math.random() * 25;
-            
-            if (change < -0.15) direction = 'pad';
-            else if (Math.abs(change) < 0.1) {
-                direction = Math.random() > 0.5 ? 'konsolidacija' : 'sideways';
-                confidence = 55 + Math.random() * 20;
-            }
-            
             predictions[tf] = {
-                direction: direction,
-                changePercent: Math.abs(change),
-                confidence: confidence
+                direction: 'konsolidacija',
+                changePercent: Math.random() * 2,
+                confidence: 50 + Math.random() * 20
             };
         });
         
@@ -1304,12 +1466,12 @@ class TradingDashboard {
         // Dropdown change listener
         const dropdown = document.getElementById('currency-select');
         if (dropdown) {
-            dropdown.addEventListener('change', (e) => {
+            dropdown.addEventListener('change', async (e) => {
                 const selectedValue = e.target.value;
                 if (selectedValue) {
                     this.selectedCrypto = selectedValue;
                     localStorage.setItem('selectedCrypto', selectedValue);
-                    this.loadCryptoDetails(selectedValue);
+                    await this.loadCryptoDetails(selectedValue);
                     console.log(`💰 Odabrana valuta: ${selectedValue} (spremljeno u localStorage)`);
                 }
             });
@@ -1317,11 +1479,11 @@ class TradingDashboard {
         
         // Timeframe buttons
         document.querySelectorAll('.tf-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 this.selectedTimeframe = e.target.dataset.tf;
-                this.loadCryptoDetails(this.selectedCrypto);
+                await this.loadCryptoDetails(this.selectedCrypto);
             });
         });
 
