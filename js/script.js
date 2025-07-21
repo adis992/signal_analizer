@@ -639,6 +639,9 @@ class TradingDashboard {
         
         console.log('🔮 Ažuriram predviđanja:', predictions);
         
+        // Generiši glavni ukupni signal
+        this.updateMainSignal(predictions);
+        
         // Svi timeframe elementi
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
         
@@ -654,6 +657,75 @@ class TradingDashboard {
                 predElement.className = `prediction-value ${p.direction.toLowerCase()}`;
             }
         });
+    }
+
+    updateMainSignal(predictions) {
+        const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
+        let totalRast = 0;
+        let totalPad = 0;
+        let totalConfidence = 0;
+        let count = 0;
+        let weights = [0.5, 0.8, 1.2, 1.8, 2.5, 3.0, 3.5, 4.0, 3.8, 3.2]; // Različite težine za timeframe-ove
+        
+        // Analiziraj sve predictions
+        timeframes.forEach((tf, index) => {
+            if (predictions[tf]) {
+                const pred = predictions[tf];
+                const weight = weights[index];
+                
+                if (pred.direction === 'rast') {
+                    totalRast += pred.confidence * weight;
+                } else if (pred.direction === 'pad') {
+                    totalPad += pred.confidence * weight;
+                }
+                
+                totalConfidence += pred.confidence * weight;
+                count += weight;
+            }
+        });
+        
+        // Odredi glavni signal
+        let mainSignal, mainIcon, mainConfidence, mainDescription;
+        
+        const rastPercentage = (totalRast / count);
+        const padPercentage = (totalPad / count);
+        const avgConfidence = (totalConfidence / count);
+        
+        if (rastPercentage > padPercentage + 10) {
+            mainSignal = "📈 GLAVNO PREDVIĐANJE: RAST";
+            mainIcon = "🚀";
+            mainDescription = `Konsenzus ${timeframes.length} analiza preporučuje KUPOVINU. Snažan signal za ulazak.`;
+        } else if (padPercentage > rastPercentage + 10) {
+            mainSignal = "📉 GLAVNO PREDVIĐANJE: PAD";
+            mainIcon = "📉";
+            mainDescription = `Konsenzus ${timeframes.length} analiza preporučuje PRODAJU ili IZLAZAK. Oprez!`;
+        } else {
+            mainSignal = "⚠️ GLAVNO PREDVIĐANJE: ČEKAJ";
+            mainIcon = "⏸️";
+            mainDescription = `Kontradiktorna predviđanja. Preporučuje se ČEKANJE za jasniji signal.`;
+        }
+        
+        mainConfidence = Math.min(95, Math.max(55, avgConfidence));
+        
+        // Ažuriraj DOM elemente
+        const signalElement = document.getElementById('main-signal');
+        if (signalElement) {
+            const iconEl = signalElement.querySelector('.signal-icon');
+            const textEl = signalElement.querySelector('.signal-text');
+            const confidenceEl = signalElement.querySelector('.signal-confidence');
+            const descriptionEl = signalElement.querySelector('.signal-description');
+            
+            if (iconEl) iconEl.textContent = mainIcon;
+            if (textEl) textEl.textContent = mainSignal;
+            if (confidenceEl) confidenceEl.textContent = `${mainConfidence.toFixed(1)}% pouzdanost`;
+            if (descriptionEl) descriptionEl.textContent = mainDescription;
+            
+            // Dodaj odgovarajuću klasu za styling
+            signalElement.className = 'main-signal';
+            if (mainSignal.includes('RAST')) signalElement.classList.add('bullish');
+            else if (mainSignal.includes('PAD')) signalElement.classList.add('bearish');
+            else signalElement.classList.add('neutral');
+        }
     }
 
     generateSmartPredictions() {
@@ -853,7 +925,7 @@ class TradingDashboard {
         const tipsContainer = document.createElement('div');
         tipsContainer.id = 'trading-tips';
         tipsContainer.innerHTML = `
-            <h3>💡 TRADING SAVETI</h3>
+            <h3>💡 TRADING SAVJETI</h3>
             <div class="tip">📊 RSI ispod 30 = mogućnost kupovine</div>
             <div class="tip">📈 RSI iznad 70 = mogućnost prodaje</div>
             <div class="tip">🔄 MACD crossover = signal za promenu trenda</div>
