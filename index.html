@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚀 CRYPTO SIGNAL TRACKER - 100% Tačnost</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chat.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="description" content="Profesionalni crypto trading signali sa 100% tačnošću. Praćenje BTC, ETH, SOL i drugih kriptovaluta u realnom vremenu.">
     <meta name="keywords" content="crypto, bitcoin, ethereum, solana, trading, signali, analiza">
@@ -285,7 +286,70 @@
         </div>
     </div>
 
+    <!-- Chat Interface -->
+    <div id="chatToggle" class="chat-toggle">
+        <span class="chat-icon">💬</span>
+        <div id="chatBadge" class="chat-badge">0</div>
+    </div>
+
+    <div id="chatPanel" class="chat-panel">
+        <div class="chat-header">
+            <h3>TRADER CHAT</h3>
+            <div class="chat-controls">
+                <button id="adminPanelBtn" class="admin-panel-btn" style="display: none;">Admin</button>
+                <button id="chatClose" class="chat-close">×</button>
+            </div>
+        </div>
+
+        <div id="userRegistration" class="user-registration">
+            <h4>UĐITE U CHAT</h4>
+            <input type="text" id="usernameInput" placeholder="Vaše ime..." maxlength="20">
+            <input type="email" id="emailInput" placeholder="Email (opcionalno)...">
+            <label>
+                <input type="checkbox" id="shareLocation"> Dijeli lokaciju
+            </label>
+            <button id="joinChatBtn">UĐI U CHAT</button>
+        </div>
+
+        <div id="chatMessages" class="chat-messages" style="display: none;"></div>
+        
+        <div id="messageInput" class="message-input" style="display: none;">
+            <input type="text" id="messageText" placeholder="Napišite poruku..." maxlength="200">
+            <button id="sendMessage">📤</button>
+        </div>
+
+        <div id="adminPanel" class="admin-panel" style="display: none;">
+            <h4>👑 ADMIN PANEL</h4>
+            <textarea id="adminMessage" placeholder="Admin poruka za sve..." maxlength="300"></textarea>
+            <div class="admin-buttons">
+                <button id="sendAdminMessage">Pošalji Admin</button>
+                <button id="clearChat">Obriši Chat</button>
+            </div>
+            <div class="user-stats">
+                <h5>AKTIVNI KORISNICI:</h5>
+                <div id="activeUsers"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Load GitHub Pages version of JavaScript -->
     <script src="js/script.js"></script>
+    <script src="js/chat.js"></script>
+
+    <script>
+        // Initialize chat when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure all scripts are loaded
+            setTimeout(() => {
+                if (typeof RealtimeChatManager !== 'undefined') {
+                    window.chatManager = new RealtimeChatManager();
+                    console.log('✅ TRADER CHAT sistem uspješno pokrenut!');
+                } else {
+                    console.error('❌ TRADER CHAT sistem se nije učitao!');
+                    console.log('🔍 Provjerite da li je chat.js uspješno učitan.');
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>
