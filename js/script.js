@@ -65,13 +65,19 @@ class TradingDashboard {
         this.updateTime();
         setInterval(() => this.updateTime(), 1000);
         
+        // Inicijaliziraj sa pametnim podešavanjima
+        this.selectedTimeframe = this.selectedTimeframe || '1h'; // Default 1h
+        this.selectedCrypto = localStorage.getItem('selectedCrypto') || 'BTCUSDT';
+        
+        console.log(`🎯 Inicijalizujem sa: ${this.selectedCrypto} na ${this.selectedTimeframe} timeframe`);
+        
         await this.loadInitialData();
         this.setupEventListeners();
-        this.startUpdates();
+        this.startUpdates(); // Će koristiti selectedTimeframe za interval
         this.addTradingTips();
         this.setupPredictionRefresh();
         
-        console.log('✅ Dashboard uspešno inicijalizovan sa svim mogućnostima!');
+        console.log('✅ Dashboard uspešno inicijalizovan sa pametnim ažuriranjem!');
     }
 
     checkAdminStatus() {
@@ -191,7 +197,9 @@ class TradingDashboard {
             
         } catch (error) {
             console.error('❌ Greška pri učitavanju podataka:', error);
-            this.showError('Greška pri povezivanju sa Binance API. Molimo pokušajte ponovo.');
+            // NE PRIKAŽI error popup - samo logiraj
+            console.warn('⚠️ Binance API greška, koristit će se fallback podaci');
+            // this.showError('Greška pri povezivanju sa Binance API. Molimo pokušajte ponovo.');
         }
     }
 
@@ -553,74 +561,76 @@ class TradingDashboard {
         try {
             console.log(`📈 Učitavam STVARNI grafikon sa Binance API za ${symbol}...`);
             
-            // Učitaj stvarne candle podatke sa Binance API
-            const chartData = await this.fetchChartData(symbol);
+            // DODAJ DELAY da sprečim bombardovanje API-ja
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             const canvas = document.getElementById('price-chart');
             if (!canvas) {
-                console.error('Canvas element not found');
+                console.error('❌ Canvas element ne postoji');
                 return;
             }
             
-            const ctx = canvas.getContext('2d');
-            
+            // Uništi postojeći chart PRVO
             if (this.chart) {
                 this.chart.destroy();
+                this.chart = null;
+                console.log('🗑️ Postojeći chart uništen');
             }
             
-            this.chart = new Chart(ctx, {
-                type: 'line',
-                data: chartData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `${symbol.replace('USDT', '')} - ${this.selectedTimeframe.toUpperCase()} - STVARNI PODACI`,
-                            color: '#00ff88',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        legend: {
-                            labels: { color: '#ffffff' }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#cccccc' },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        },
-                        y: {
-                            ticks: { 
-                                color: '#cccccc',
-                                callback: function(value) {
-                                    return '$' + value.toFixed(4);
-                                }
-                            },
-                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                        }
-                    },
-                    elements: {
-                        point: { radius: 2, hoverRadius: 6 }
-                    }
-                }
-            });
-            
-            console.log('✅ STVARNI grafikon uspešno učitan!');
-            
-        } catch (error) {
-            console.error('❌ Greška pri učitavanju grafikona:', error);
-            
-            // NE PRIKAŽI popup error - samo koristi backup
             try {
-                console.log('🔧 Koristim backup chart podatke umesto error popup...');
-                const fallbackData = this.generateFallbackChartData(symbol);
-                
-                const canvas = document.getElementById('price-chart');
-                if (!canvas) return;
+                // Pokušaj učitati stvarne candle podatke sa Binance API
+                const chartData = await this.fetchChartData(symbol);
                 
                 const ctx = canvas.getContext('2d');
-                if (this.chart) this.chart.destroy();
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `${symbol.replace('USDT', '')} - ${this.selectedTimeframe.toUpperCase()} - STVARNI PODACI`,
+                                color: '#00ff88',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            legend: {
+                                labels: { color: '#ffffff' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#cccccc' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            y: {
+                                ticks: { 
+                                    color: '#cccccc',
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(4);
+                                    }
+                                },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            }
+                        },
+                        elements: {
+                            point: { radius: 2, hoverRadius: 6 }
+                        }
+                    }
+                });
+                
+                console.log('✅ STVARNI grafikon uspešno učitan!');
+                
+            } catch (apiError) {
+                console.error('❌ Binance API greška:', apiError);
+                
+                // BACKUP CHART - ne prikaži error popup
+                console.log('🔧 Koristim backup chart umesto error popup...');
+                const fallbackData = this.generateFallbackChartData(symbol);
+                
+                const ctx = canvas.getContext('2d');
                 
                 this.chart = new Chart(ctx, {
                     type: 'line',
@@ -638,11 +648,16 @@ class TradingDashboard {
                             legend: { labels: { color: '#ffffff' } }
                         },
                         scales: {
-                            x: { ticks: { color: '#cccccc' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                            x: { 
+                                ticks: { color: '#cccccc' }, 
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' } 
+                            },
                             y: { 
                                 ticks: { 
                                     color: '#cccccc',
-                                    callback: function(value) { return '$' + value.toFixed(4); }
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(4);
+                                    }
                                 },
                                 grid: { color: 'rgba(255, 255, 255, 0.1)' }
                             }
@@ -651,12 +666,13 @@ class TradingDashboard {
                     }
                 });
                 
-                console.log('✅ Backup chart uspešno učitan - nema error popup');
-            } catch (fallbackError) {
-                console.error('❌ I backup chart ne radi:', fallbackError);
-                // Samo logiraj, NEMOJ showError popup
-                console.warn('⚠️ Chart se neće prikazati ovaj put');
+                console.log('✅ Backup chart uspešno učitan');
             }
+            
+        } catch (error) {
+            console.error('❌ Kritična greška pri učitavanju chart-a:', error);
+            // NE PRIKAZUJ ERROR POPUP - samo logiraj
+            console.warn('⚠️ Chart će biti preskočen ovaj put');
         }
     }
 
@@ -1646,7 +1662,9 @@ class TradingDashboard {
             
         } catch (error) {
             console.error('❌ Greška pri ažuriranju timeframe analize:', error);
-            this.showError('Multi-timeframe analiza trenutno nedostupna');
+            // NE PRIKAŽI error popup - samo logiraj
+            console.warn('⚠️ Multi-timeframe analiza neće biti prikazana ovaj put');
+            // this.showError('Multi-timeframe analiza trenutno nedostupna');
         }
     }
 
