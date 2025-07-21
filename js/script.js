@@ -1546,28 +1546,71 @@ class TradingDashboard {
 
     async updateTimeframeAnalysis(symbol) {
         try {
-            console.log(`📊 Generiram multi-timeframe analizu za ${symbol}...`);
+            console.log(`📊 Generiram STVARNU multi-timeframe analizu za ${symbol}...`);
             
             const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
             const data = {};
             
-            timeframes.forEach(tf => {
-                const rsi = 30 + Math.random() * 40;
-                let signal = 'DRŽI';
-                
-                if (rsi < 30) signal = 'KUPUJ';
-                else if (rsi > 70) signal = 'PRODAJ';
-                else if (rsi > 60) signal = 'RAST';
-                else if (rsi < 40) signal = 'PAD';
-                
-                data[tf] = {
-                    rsi: rsi,
-                    signal: { signal: signal },
-                    price: 30000 + Math.random() * 40000
-                };
-            });
+            // Za svaki timeframe dohvati STVARNE podatke sa Binance API
+            for (const tf of timeframes) {
+                try {
+                    console.log(`📈 Dohvaćam ${tf} podatke za ${symbol}...`);
+                    
+                    // Dohvati candle podatke za specific timeframe
+                    const response = await fetch(`${this.binanceApiUrl}/klines?symbol=${symbol}&interval=${tf}&limit=50`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const klines = await response.json();
+                    const closePrices = klines.map(candle => parseFloat(candle[4]));
+                    const volumes = klines.map(candle => parseFloat(candle[5]));
+                    
+                    // Izračunaj STVARNE tehničke indikatore za ovaj timeframe
+                    const rsi = this.calculateRSI(closePrices);
+                    const currentPrice = closePrices[closePrices.length - 1];
+                    const macd = this.calculateMACD(closePrices);
+                    
+                    // Generiraj PAMETAN signal na osnovu stvarnih indikatora
+                    let signal = 'DRŽI';
+                    let signalClass = 'neutral';
+                    
+                    if (rsi < 30) { 
+                        signal = 'KUPUJ'; 
+                        signalClass = 'bullish';
+                    } else if (rsi > 70) { 
+                        signal = 'PRODAJ'; 
+                        signalClass = 'bearish';
+                    } else if (macd.macd > macd.signal) {
+                        signal = 'RAST';
+                        signalClass = 'bullish';
+                    } else if (macd.macd < macd.signal) {
+                        signal = 'PAD';
+                        signalClass = 'bearish';
+                    }
+                    
+                    data[tf] = {
+                        rsi: rsi,
+                        signal: signal,
+                        signalClass: signalClass,
+                        price: currentPrice,
+                        volume: volumes[volumes.length - 1],
+                        macd: macd
+                    };
+                    
+                } catch (tfError) {
+                    console.error(`❌ Greška za ${tf}:`, tfError);
+                    // Fallback sa trenutnom cenom ako timeframe ne radi
+                    const currentPrice = this.cryptoData?.[symbol]?.price || 0;
+                    data[tf] = {
+                        rsi: 50,
+                        signal: 'DRŽI',
+                        signalClass: 'neutral',
+                        price: currentPrice,
+                        volume: 0
+                    };
+                }
+            }
             
-            console.log('📈 Multi-timeframe podaci:', data);
+            console.log(`✅ STVARNI multi-timeframe podaci za ${symbol}:`, data);
             
             const timeframeGrid = document.getElementById('timeframe-grid');
             if (!timeframeGrid) return;
@@ -1580,16 +1623,21 @@ class TradingDashboard {
                 const panel = document.createElement('div');
                 panel.className = 'timeframe-panel';
                 
-                const signal = tfData.signal ? tfData.signal.signal : 'DRŽI';
-                const signalClass = signal.toLowerCase().replace(' ', '-');
+                const signal = tfData.signal || 'DRŽI';
+                const signalClass = tfData.signalClass || 'neutral';
                 const rsi = tfData.rsi ? tfData.rsi.toFixed(1) : '--';
                 const price = tfData.price ? tfData.price.toFixed(4) : '--';
+                const symbolName = symbol.replace('USDT', '');
+                
+                // Dodaj volume indicator
+                const volumeIndicator = tfData.volume > 1000000 ? '🔥' : '';
                 
                 panel.innerHTML = `
-                    <div class="tf-header">${tf.toUpperCase()}</div>
+                    <div class="tf-header">${tf.toUpperCase()} ${volumeIndicator}</div>
                     <div class="tf-signal ${signalClass}">${signal}</div>
                     <div class="tf-rsi">RSI: ${rsi}</div>
                     <div class="tf-price">$${price}</div>
+                    <div class="tf-symbol">${symbolName}</div>
                 `;
                 
                 timeframeGrid.appendChild(panel);
@@ -1597,6 +1645,7 @@ class TradingDashboard {
             
         } catch (error) {
             console.error('❌ Greška pri ažuriranju timeframe analize:', error);
+            this.showError('Multi-timeframe analiza trenutno nedostupna');
         }
     }
 
