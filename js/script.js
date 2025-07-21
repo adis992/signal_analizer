@@ -390,7 +390,7 @@ class TradingDashboard {
             
             this.updateTechnicalIndicators(analysisData);
             this.calculateOverallAccuracy(analysisData);
-            this.updatePredictions(predictions);
+            this.updatePredictions(predictions, analysisData);
             this.updateTimeframeAnalysis(symbol);
             await this.loadChart(symbol);
             
@@ -901,15 +901,16 @@ class TradingDashboard {
         }
     }
 
-    updatePredictions(predictions) {
+    updatePredictions(predictions, analysisData = null) {
         if (!predictions) {
             predictions = this.getBasicPredictions();
         }
         
         console.log('🔮 Ažuriram predviđanja:', predictions);
         
-        // Generiši glavni ukupni signal
-        this.updateMainSignal(predictions);
+        // Generiši glavni ukupni signal sa stvarnom cenom
+        const currentPrice = analysisData ? analysisData.price : this.getCurrentPrice();
+        this.updateMainSignal(predictions, currentPrice);
         
         // Svi timeframe elementi sa boljim prikazom
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
@@ -1113,9 +1114,13 @@ class TradingDashboard {
         this.updatePredictions(predictions);
     }
 
-    updateMainSignal(predictions) {
+    updateMainSignal(predictions, currentPrice = null) {
         // Generiši detaljni glavni signal
-        const currentPrice = this.getCurrentPrice(); // Will add this method
+        if (!currentPrice) {
+            currentPrice = this.getCurrentPrice();
+        }
+        
+        console.log(`💰 Koristim cenu za main signal: $${currentPrice}`);
         const detailedSignal = this.generateDetailedMainSignal(predictions, currentPrice);
         
         // Ažuriraj DOM elemente sa detaljnim informacijama
@@ -1163,23 +1168,15 @@ class TradingDashboard {
     }
 
     getCurrentPrice() {
-        // Get current price from crypto data or generate realistic one
+        // Get current price SAMO iz STVARNIH Binance podataka
         if (this.cryptoData && this.cryptoData[this.selectedCrypto]) {
+            console.log(`💰 Trenutna STVARNA cena za ${this.selectedCrypto}: $${this.cryptoData[this.selectedCrypto].price}`);
             return this.cryptoData[this.selectedCrypto].price;
         }
         
-        // Generate realistic prices based on crypto symbol
-        const priceMap = {
-            'BTCUSDT': 55000 + Math.random() * 20000,
-            'ETHUSDT': 2500 + Math.random() * 1000,
-            'BNBUSDT': 300 + Math.random() * 200,
-            'SOLUSDT': 80 + Math.random() * 60,
-            'XRPUSDT': 0.5 + Math.random() * 0.8,
-            'ADAUSDT': 0.3 + Math.random() * 0.5,
-            'DOGEUSDT': 0.05 + Math.random() * 0.1
-        };
-        
-        return priceMap[this.selectedCrypto] || 1000 + Math.random() * 500;
+        console.warn(`⚠️ Nema cache podataka za ${this.selectedCrypto} - koristim fallback`);
+        // Ne vraćaj mock podatke - vrati null da se API pozove ponovo
+        return null;
     }
 
     async generateSmartPredictions(symbol, analysisData) {
@@ -1341,7 +1338,13 @@ class TradingDashboard {
         let mainDirection = 'konsolidacija';
         let mainIcon = '🔄';
         let recommendation = 'ČEKAJTE';
-        let expectedPrice = currentPrice || 55000; // Fallback price
+        let expectedPrice = currentPrice; // Use actual current price
+        
+        // Ako nema currentPrice, ne možemo generirati prognoza
+        if (!expectedPrice) {
+            console.warn('⚠️ Nema trenutne cene - ne mogu generirati prognozu');
+            expectedPrice = 0;
+        }
         
         if (bullishSignals > bearishSignals) {
             mainDirection = 'RAST';
