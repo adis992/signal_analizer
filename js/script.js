@@ -611,9 +611,9 @@ class TradingDashboard {
         } catch (error) {
             console.error('❌ Greška pri učitavanju grafikona:', error);
             
-            // Pokušaj fallback sa osnovnim mock podacima samo za chart
+            // NE PRIKAŽI popup error - samo koristi backup
             try {
-                console.log('🔧 Koristim backup chart podatke...');
+                console.log('🔧 Koristim backup chart podatke umesto error popup...');
                 const fallbackData = this.generateFallbackChartData(symbol);
                 
                 const canvas = document.getElementById('price-chart');
@@ -651,10 +651,11 @@ class TradingDashboard {
                     }
                 });
                 
-                console.log('✅ Backup chart učitan');
+                console.log('✅ Backup chart uspešno učitan - nema error popup');
             } catch (fallbackError) {
-                console.error('❌ Backup chart failed:', fallbackError);
-                this.showError('Chart trenutno nedostupan. Binance API možda ima problema.');
+                console.error('❌ I backup chart ne radi:', fallbackError);
+                // Samo logiraj, NEMOJ showError popup
+                console.warn('⚠️ Chart se neće prikazati ovaj put');
             }
         }
     }
@@ -1670,6 +1671,13 @@ class TradingDashboard {
                 document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 this.selectedTimeframe = e.target.dataset.tf;
+                
+                console.log(`🎯 Odabran novi timeframe: ${this.selectedTimeframe}`);
+                
+                // RESTART update interval sa novim timeframe-om
+                this.startUpdates();
+                
+                // Učitaj podatke za novi timeframe
                 await this.loadCryptoDetails(this.selectedCrypto);
             });
         });
@@ -1688,11 +1696,43 @@ class TradingDashboard {
     }
 
     startUpdates() {
-        this.updateInterval = setInterval(() => {
-            this.loadInitialData();
-        }, 30000); // Povećaj na 30s da ne opterećuješ Binance API
+        // STOP svim postojećim intervalima
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+            console.log('🛑 Zaustavljen stari update interval');
+        }
+        if (this.predictionInterval) {
+            clearInterval(this.predictionInterval);
+            console.log('🛑 Zaustavljen stari prediction interval');
+        }
         
-        console.log('🔄 Pokrenuto kontinuirano ažuriranje (30s interval)');
+        // PAMETNO ažuriranje na osnovu odabranog timeframe-a
+        const timeframeIntervals = {
+            '1m': 60 * 1000,        // 1 minuta
+            '5m': 5 * 60 * 1000,    // 5 minuta
+            '15m': 15 * 60 * 1000,  // 15 minuta
+            '30m': 30 * 60 * 1000,  // 30 minuta  
+            '1h': 60 * 60 * 1000,   // 1 sat
+            '4h': 4 * 60 * 60 * 1000, // 4 sata
+            '1d': 24 * 60 * 60 * 1000, // 24 sata
+            '1w': 7 * 24 * 60 * 60 * 1000 // 7 dana
+        };
+        
+        const currentTimeframe = this.selectedTimeframe || '1h';
+        const updateInterval = timeframeIntervals[currentTimeframe] || (60 * 60 * 1000); // Default 1h
+        
+        console.log(`🔄 Pokretam PAMETAN update interval: ${currentTimeframe} = ${updateInterval/1000}s`);
+        
+        // Prvo ažuriranje odmah
+        this.loadInitialData();
+        
+        // Zatim ažuriranje prema timeframe-u
+        this.updateInterval = setInterval(() => {
+            console.log(`🔄 Automatsko ažuriranje (${currentTimeframe} interval)...`);
+            this.loadInitialData();
+        }, updateInterval);
+        
+        console.log(`✅ Pokrenuto pametan ažuriranje - ${currentTimeframe} timeframe`);
     }
 
     // Helper funkcije
@@ -1782,11 +1822,18 @@ class TradingDashboard {
     }
 
     destroy() {
+        // OČISTI SVE INTERVALE kad se stranica zatvaraa
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
+            console.log('🗑️ Update interval očišten');
+        }
+        if (this.predictionInterval) {
+            clearInterval(this.predictionInterval);
+            console.log('🗑️ Prediction interval očišten');
         }
         if (this.chart) {
             this.chart.destroy();
+            console.log('🗑️ Chart uništen');
         }
     }
 }
