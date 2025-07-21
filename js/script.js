@@ -3,10 +3,12 @@ class TradingDashboard {
         // Direktno koristi Binance API umesto lokalnog servera
         this.binanceApiUrl = 'https://api.binance.com/api/v3';
         this.cryptoData = {};
-        this.selectedCrypto = 'BTCUSDT';
+        this.selectedCrypto = localStorage.getItem('selectedCrypto') || 'BTCUSDT';
         this.selectedTimeframe = '1m';
         this.chart = null;
         this.updateInterval = null;
+        this.predictionUpdateInterval = null;
+        this.predictionRefreshRate = localStorage.getItem('predictionRefreshRate') || '1h'; // 15min, 30min, 1h, 1d
         
         // Lista popularnih crypto parova + DOGE za Tarika! 😂
         this.cryptoSymbols = [
@@ -38,6 +40,9 @@ class TradingDashboard {
     async init() {
         console.log('🚀 Inicijalizujem Trading Dashboard (GitHub Pages verzija)...');
         
+        // Check ako je adis992 admin
+        this.checkAdminStatus();
+        
         this.updateTime();
         setInterval(() => this.updateTime(), 1000);
         
@@ -45,8 +50,86 @@ class TradingDashboard {
         this.setupEventListeners();
         this.startUpdates();
         this.addTradingTips();
+        this.setupPredictionRefresh();
         
         console.log('✅ Dashboard uspešno inicijalizovan sa svim mogućnostima!');
+    }
+
+    checkAdminStatus() {
+        const gitUser = localStorage.getItem('github_user');
+        const isGitHub = window.location.hostname.includes('adis992.github.io');
+        
+        if (gitUser === 'adis992' || isGitHub) {
+            document.body.classList.add('admin-mode');
+            localStorage.setItem('admin_verified', 'true');
+            console.log('👑 Admin status: adis992 detected!');
+        }
+    }
+
+    setupPredictionRefresh() {
+        // Setup auto-refresh za predviđanja
+        this.startPredictionRefresh();
+        
+        // Dodaj UI kontrole za refresh rate
+        this.addPredictionRefreshControls();
+    }
+
+    startPredictionRefresh() {
+        // Clear postojeći interval
+        if (this.predictionUpdateInterval) {
+            clearInterval(this.predictionUpdateInterval);
+        }
+        
+        // Odredi interval u milisekundama
+        const intervals = {
+            '15min': 15 * 60 * 1000,
+            '30min': 30 * 60 * 1000,
+            '1h': 60 * 60 * 1000,
+            '1d': 24 * 60 * 60 * 1000
+        };
+        
+        const intervalMs = intervals[this.predictionRefreshRate] || intervals['1h'];
+        
+        console.log(`⏰ Prediction auto-refresh postavljen na ${this.predictionRefreshRate}`);
+        
+        // Postavi interval
+        this.predictionUpdateInterval = setInterval(() => {
+            console.log('🔄 Auto-ažuriranje predviđanja...');
+            this.generateAndUpdatePredictions();
+        }, intervalMs);
+    }
+
+    addPredictionRefreshControls() {
+        // Dodaj kontrole za refresh rate u predictions panel
+        const predictionsPanel = document.querySelector('.predictions-panel');
+        if (predictionsPanel) {
+            const controlsHTML = `
+                <div class="prediction-refresh-controls">
+                    <label>🔄 Auto-refresh predviđanja:</label>
+                    <select id="prediction-refresh-rate" class="refresh-rate-select">
+                        <option value="15min">Svakkih 15 minuta</option>
+                        <option value="30min">Svakikh 30 minuta</option>
+                        <option value="1h" selected>Svaki sat</option>
+                        <option value="1d">Jednom dnevno</option>
+                    </select>
+                </div>
+            `;
+            
+            // Dodaj na vrh predictions panel-a
+            predictionsPanel.insertAdjacentHTML('afterbegin', controlsHTML);
+            
+            // Setup event listener
+            const refreshSelect = document.getElementById('prediction-refresh-rate');
+            if (refreshSelect) {
+                refreshSelect.value = this.predictionRefreshRate;
+                refreshSelect.addEventListener('change', (e) => {
+                    this.predictionRefreshRate = e.target.value;
+                    localStorage.setItem('predictionRefreshRate', this.predictionRefreshRate);
+                    this.startPredictionRefresh();
+                    console.log(`✅ Prediction refresh rate promenjen na: ${this.predictionRefreshRate}`);
+                });
+            }
+        }
     }
 
     updateTime() {
@@ -137,6 +220,7 @@ class TradingDashboard {
             option.value = crypto.symbol;
             option.textContent = `${cryptoIcon} ${displayName} - $${crypto.price.toFixed(4)} (${crypto.change >= 0 ? '+' : ''}${crypto.change.toFixed(2)}%)`;
             
+            // Auto-select saved crypto iz localStorage
             if (crypto.symbol === this.selectedCrypto) {
                 option.selected = true;
             }
@@ -144,11 +228,11 @@ class TradingDashboard {
             dropdown.appendChild(option);
         });
         
-        dropdown.addEventListener('change', (e) => {
-            if (e.target.value) {
-                this.selectCrypto(e.target.value);
-            }
-        });
+        // Postavi odabranu valutu ako je učitana iz localStorage
+        if (this.selectedCrypto && this.selectedCrypto !== 'BTCUSDT') {
+            dropdown.value = this.selectedCrypto;
+            console.log(`💾 Učitana valuta iz localStorage: ${this.selectedCrypto}`);
+        }
         
         this.updateSelectedCryptoInfo(cryptos.find(c => c.symbol === this.selectedCrypto));
         console.log('✅ Dropdown popunjen sa', cryptos.length, 'valuta');
@@ -829,6 +913,20 @@ class TradingDashboard {
     }
 
     setupEventListeners() {
+        // Dropdown change listener
+        const dropdown = document.getElementById('currency-select');
+        if (dropdown) {
+            dropdown.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                if (selectedValue) {
+                    this.selectedCrypto = selectedValue;
+                    localStorage.setItem('selectedCrypto', selectedValue);
+                    this.loadCryptoDetails(selectedValue);
+                    console.log(`💰 Odabrana valuta: ${selectedValue} (spremljeno u localStorage)`);
+                }
+            });
+        }
+        
         // Timeframe buttons
         document.querySelectorAll('.tf-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -845,9 +943,9 @@ class TradingDashboard {
         
         if (toggleBtn && cryptoGrid) {
             toggleBtn.addEventListener('click', () => {
-                cryptoGrid.classList.toggle('hidden');
-                toggleBtn.textContent = cryptoGrid.classList.contains('hidden') ? 
-                    '👁️ PRIKAŽI SVE VALUTE' : '👁️ SAKRIJ SVE VALUTE';
+                cryptoGrid.classList.toggle('show');
+                toggleBtn.textContent = cryptoGrid.classList.contains('show') ? 
+                    '👁️ SAKRIJ SVE VALUTE' : '👁️ PRIKAŽI SVE VALUTE';
             });
         }
     }

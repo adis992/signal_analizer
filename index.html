@@ -61,9 +61,96 @@
             </div>
         </div>
 
+        <!-- Predictions Panel - MOVED TO TOP FOR PRIORITY -->
+        <div class="predictions-panel">
+            <h2>🔮 PREDVIĐANJA I SIGNALI</h2>
+            
+            <!-- Glavni Ukupni Prediction -->
+            <div class="main-prediction">
+                <h3>🎯 GLAVNI UKUPNI SIGNAL</h3>
+                <div class="main-signal" id="main-signal">
+                    <div class="signal-icon">⏳</div>
+                    <div class="signal-text">Analiziram...</div>
+                    <div class="signal-confidence">--% pouzdanost</div>
+                    <div class="signal-description">Učitavam ukupnu analizu svih timeframe-ova...</div>
+                </div>
+            </div>
+            
+            <!-- Overall Accuracy -->
+            <div class="overall-accuracy">
+                <h3>🎯 UKUPNA TAČNOST SIGNALA</h3>
+                <div class="accuracy-display">
+                    <div class="accuracy-circle">
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" id="accuracy-fill"></div>
+                        </div>
+                        <div class="accuracy-text">
+                            <span id="accuracy-percentage">--</span>% Tačnost
+                        </div>
+                    </div>
+                    <div class="signal-consensus" id="signal-consensus">UČITAVA...</div>
+                </div>
+            </div>
+
+            <!-- Predictions Grid -->
+            <div class="predictions-grid">
+                <!-- All prediction cards here -->
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">1 Minut</div>
+                    <div class="prediction-value" id="pred-1m">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-1m">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">3 Minuta</div>
+                    <div class="prediction-value" id="pred-3m">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-3m">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">15 Minuta</div>
+                    <div class="prediction-value" id="pred-15m">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-15m">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">1 Sat</div>
+                    <div class="prediction-value" id="pred-1h">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-1h">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">4 Sata</div>
+                    <div class="prediction-value" id="pred-4h">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-4h">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">6 Sati</div>
+                    <div class="prediction-value" id="pred-6h">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-6h">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">12 Sati</div>
+                    <div class="prediction-value" id="pred-12h">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-12h">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">1 Dan</div>
+                    <div class="prediction-value" id="pred-1d">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-1d">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">1 Sedmica</div>
+                    <div class="prediction-value" id="pred-1w">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-1w">-- tačnost</div>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-timeframe">1 Mjesec</div>
+                    <div class="prediction-value" id="pred-1M">📊 UČITAVA...</div>
+                    <div class="prediction-confidence" id="conf-1M">-- tačnost</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Toggle Button -->
         <div style="text-align: center; margin-bottom: 20px;">
-            <button id="toggle-grid" class="tf-btn">👁️ SAKRIJ SVE VALUTE</button>
+            <button id="toggle-grid" class="tf-btn">👁️ PRIKAŽI SVE VALUTE</button>
         </div>
 
         <!-- Crypto Grid -->
@@ -169,111 +256,6 @@
             <!-- Chart Container -->
             <div class="chart-container">
                 <canvas id="price-chart"></canvas>
-            </div>
-
-            <!-- Predictions Panel -->
-            <div class="predictions-panel">
-                <h2>🔮 PREDVIĐANJA I SIGNALI</h2>
-                
-                <!-- Glavni Ukupni Prediction -->
-                <div class="main-prediction">
-                    <h3>🎯 GLAVNI UKUPNI SIGNAL</h3>
-                    <div class="main-signal" id="main-signal">
-                        <div class="signal-icon">⏳</div>
-                        <div class="signal-text">Analiziram...</div>
-                        <div class="signal-confidence">--% pouzdanost</div>
-                        <div class="signal-description">Učitavam ukupnu analizu svih timeframe-ova...</div>
-                    </div>
-                </div>
-                
-                <!-- Overall Accuracy -->
-                <div class="overall-accuracy">
-                    <h3>🎯 UKUPNA TAČNOST SIGNALA</h3>
-                    <div class="accuracy-display">
-                        <div class="accuracy-circle">
-                            <div class="accuracy-bar">
-                                <div class="accuracy-fill" id="accuracy-fill"></div>
-                            </div>
-                            <div class="accuracy-text">
-                                <span id="accuracy-percentage">--</span>% Tačnost
-                            </div>
-                        </div>
-                        <div class="signal-consensus" id="signal-consensus">UČITAVA...</div>
-                    </div>
-                </div>
-
-                <!-- Predictions Grid -->
-                <div class="predictions-grid">
-                    <!-- 1 Minut -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">1 Minut</div>
-                        <div class="prediction-value" id="pred-1m">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-1m">-- tačnost</div>
-                    </div>
-
-                    <!-- 3 Minuta -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">3 Minuta</div>
-                        <div class="prediction-value" id="pred-3m">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-3m">-- tačnost</div>
-                    </div>
-
-                    <!-- 15 Minuta -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">15 Minuta</div>
-                        <div class="prediction-value" id="pred-15m">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-15m">-- tačnost</div>
-                    </div>
-
-                    <!-- 1 Sat -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">1 Sat</div>
-                        <div class="prediction-value" id="pred-1h">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-1h">-- tačnost</div>
-                    </div>
-
-                    <!-- 4 Sata -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">4 Sata</div>
-                        <div class="prediction-value" id="pred-4h">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-4h">-- tačnost</div>
-                    </div>
-
-                    <!-- 6 Sati -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">6 Sati</div>
-                        <div class="prediction-value" id="pred-6h">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-6h">-- tačnost</div>
-                    </div>
-
-                    <!-- 12 Sati -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">12 Sati</div>
-                        <div class="prediction-value" id="pred-12h">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-12h">-- tačnost</div>
-                    </div>
-
-                    <!-- 1 Dan -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">1 Dan</div>
-                        <div class="prediction-value" id="pred-1d">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-1d">-- tačnost</div>
-                    </div>
-
-                    <!-- 1 Sedmica -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">1 Sedmica</div>
-                        <div class="prediction-value" id="pred-1w">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-1w">-- tačnost</div>
-                    </div>
-
-                    <!-- 1 Mesec -->
-                    <div class="prediction-card">
-                        <div class="prediction-timeframe">1 Mesec</div>
-                        <div class="prediction-value" id="pred-1M">📊 UČITAVA...</div>
-                        <div class="prediction-confidence" id="conf-1M">-- tačnost</div>
-                    </div>
-                </div>
             </div>
         </div>
 

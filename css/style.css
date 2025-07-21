@@ -489,6 +489,60 @@ body {
     line-height: 1.4;
 }
 
+/* Prediction Refresh Controls */
+.prediction-refresh-controls {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.prediction-refresh-controls label {
+    color: #00ff88;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.refresh-rate-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 150px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.refresh-rate-select:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+.refresh-rate-select option {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 5px;
+}
+
+@media (max-width: 768px) {
+    .prediction-refresh-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .refresh-rate-select {
+        width: 100%;
+    }
+}
+
 /* Main Signal Color Classes */
 .main-signal.bullish .signal-icon {
     color: #00ff88;
