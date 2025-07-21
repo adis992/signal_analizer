@@ -1833,8 +1833,8 @@ class TradingDashboard {
                 <div class="tip">❄️ EMA20 < EMA50 = bearish trend (death cross)</div>
                 <div class="tip">⚠️ UVEK koristi stop-loss (3-5% ispod cene)!</div>
                 <div class="tip">💎 Diverzifikuj portfolio - ne stavljaj sve u jedan coin</div>
-                <div class="tip">� Kupi na support liniji, prodaj na resistance</div>
-                <div class="tip">�🌐 Svi podaci su sa Binance API u realnom vremenu</div>
+                <div class="tip">🎯 Kupi na support liniji, prodaj na resistance</div>
+                <div class="tip">🌐 Svi podaci su sa Binance API u realnom vremenu</div>
                 <div class="tip tip-warning">🚨 OVO NISU FINANSIJSKI SAVETI - TRADING RIZIK!</div>
             </div>
         `;
@@ -1969,3 +1969,5 @@ window.addEventListener('beforeunload', () => {
         window.tradingDashboard.destroy();
     }
 });
+
+
