@@ -413,6 +413,88 @@ body {
     font-size: 1.1rem;
 }
 
+/* Trading Guide Styles */
+.trading-guide {
+    background: linear-gradient(135deg, rgba(45, 50, 65, 0.8), rgba(25, 30, 45, 0.9));
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    box-shadow: 0 5px 20px rgba(0, 255, 136, 0.1);
+}
+
+.trading-guide h3 {
+    color: #00ff88;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+}
+
+.trading-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rule {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid;
+}
+
+.rule.green {
+    border-left-color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.rule.red {
+    border-left-color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.rule.yellow {
+    border-left-color: #ffaa00;
+    background: rgba(255, 170, 0, 0.1);
+}
+
+.rule-icon {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.rule-text {
+    color: #e0e0e0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.rule-text strong {
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .trading-guide {
+        margin: 15px 10px;
+        padding: 15px;
+    }
+    
+    .trading-rules {
+        gap: 8px;
+    }
+    
+    .rule {
+        padding: 8px 12px;
+    }
+    
+    .rule-text {
+        font-size: 13px;
+    }
+}
+
 /* Historical Panel */
 .historical-panel {
     background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
