@@ -66,7 +66,18 @@
 
         <!-- Predictions Panel - MOVED TO TOP FOR PRIORITY -->
         <div class="predictions-panel">
-            <h2>🔮 PREDVIĐANJA I SIGNALI</h2>
+            <div class="predictions-header">
+                <h2>🔮 PREDVIĐANJA I SIGNALI</h2>
+                <div class="prediction-refresh-controls">
+                    <label for="prediction-refresh-rate">🔄 Auto-refresh:</label>
+                    <select id="prediction-refresh-rate" class="refresh-rate-select">
+                        <option value="15min">Svakih 15min</option>
+                        <option value="30min">Svakih 30min</option>
+                        <option value="1h" selected>Svaki sat</option>
+                        <option value="1d">Jednom dnevno</option>
+                    </select>
+                </div>
+            </div>
             
             <!-- Glavni Ukupni Prediction -->
             <div class="main-prediction">

@@ -107,7 +107,7 @@ class CryptoChatSystem {
         chatContainer.innerHTML = `
             <div class="chat-header">
                 <div class="chat-title">
-                    <h3>💬 Crypto Trader Chat</h3>
+                    <h3>💬 GROUP CHAT</h3>
                     <span class="online-status">● ONLINE</span>
                 </div>
                 <div class="chat-controls">
@@ -118,7 +118,7 @@ class CryptoChatSystem {
             
             <div class="chat-messages" id="chatMessages">
                 <div class="welcome-message">
-                    <h4>🎯 Dobrodošli u Crypto Trader Chat!</h4>
+                    <h4>🎯 Dobrodošli u GROUP CHAT!</h4>
                     <p>${this.currentUser ? `Prijavljen kao: <strong>${this.currentUser.displayName || this.currentUser.username}</strong>` : 'Molimo registrujte se za chat'}</p>
                 </div>
             </div>
