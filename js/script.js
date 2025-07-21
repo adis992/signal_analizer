@@ -1818,24 +1818,125 @@ class TradingDashboard {
         const tipsContainer = document.createElement('div');
         tipsContainer.id = 'trading-tips';
         tipsContainer.innerHTML = `
-            <h3>💡 TRADING SAVJETI</h3>
-            <div class="tip">📊 RSI ispod 30 = mogućnost kupovine</div>
-            <div class="tip">📈 RSI iznad 70 = mogućnost prodaje</div>
-            <div class="tip">🔄 MACD crossover = signal za promenu trenda</div>
-            <div class="tip">💰 Visok volumen = jak signal</div>
-            <div class="tip">⚠️ Uvek koristi stop-loss!</div>
-            <div class="tip">🌐 Podaci sa Binance API u realnom vremenu</div>
+            <div class="tips-header">
+                <h3>💡 TRADING SAVJETI</h3>
+                <button class="close-tips" onclick="this.parentElement.parentElement.remove()">✖️</button>
+            </div>
+            <div class="tips-content">
+                <div class="tip">📊 RSI ispod 30 = mogućnost kupovine (oversold)</div>
+                <div class="tip">📈 RSI iznad 70 = mogućnost prodaje (overbought)</div>
+                <div class="tip">🔄 MACD crossover = signal za promenu trenda</div>
+                <div class="tip">💰 Visok volumen = jak signal, nizak = slab</div>
+                <div class="tip">📉 Bollinger Bands: cena na donjoj = kupuj</div>
+                <div class="tip">📈 Bollinger Bands: cena na gornjoj = prodaj</div>
+                <div class="tip">🔥 EMA20 > EMA50 = bullish trend (golden cross)</div>
+                <div class="tip">❄️ EMA20 < EMA50 = bearish trend (death cross)</div>
+                <div class="tip">⚠️ UVEK koristi stop-loss (3-5% ispod cene)!</div>
+                <div class="tip">💎 Diverzifikuj portfolio - ne stavljaj sve u jedan coin</div>
+                <div class="tip">� Kupi na support liniji, prodaj na resistance</div>
+                <div class="tip">�🌐 Svi podaci su sa Binance API u realnom vremenu</div>
+                <div class="tip tip-warning">🚨 OVO NISU FINANSIJSKI SAVETI - TRADING RIZIK!</div>
+            </div>
         `;
         
         tipsContainer.style.cssText = `
-            position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8);
-            color: white; padding: 15px; border-radius: 8px; max-width: 300px;
-            font-size: 12px; z-index: 1000; border: 1px solid #333;
+            position: fixed; bottom: 20px; left: 20px; background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(0,50,100,0.8));
+            color: white; padding: 0; border-radius: 12px; max-width: 350px; min-width: 300px;
+            font-size: 12px; z-index: 10000; border: 1px solid #0088ff; 
+            box-shadow: 0 8px 32px rgba(0,136,255,0.3); backdrop-filter: blur(10px);
+            animation: slideInLeft 0.5s ease-out; max-height: 70vh; overflow-y: auto;
         `;
+        
+        // Dodaj custom stilove za tips
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInLeft {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            #trading-tips .tips-header {
+                background: linear-gradient(90deg, #0088ff, #00aaff);
+                padding: 12px 15px; border-radius: 12px 12px 0 0; 
+                display: flex; justify-content: space-between; align-items: center;
+                border-bottom: 1px solid rgba(255,255,255,0.2);
+            }
+            
+            #trading-tips h3 {
+                margin: 0; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            }
+            
+            #trading-tips .close-tips {
+                background: none; border: none; color: white; font-size: 14px; 
+                cursor: pointer; padding: 2px 6px; border-radius: 4px;
+                transition: background 0.2s ease;
+            }
+            
+            #trading-tips .close-tips:hover {
+                background: rgba(255,255,255,0.2);
+            }
+            
+            #trading-tips .tips-content {
+                padding: 15px; max-height: 50vh; overflow-y: auto;
+            }
+            
+            #trading-tips .tip {
+                margin: 8px 0; padding: 8px 10px; background: rgba(255,255,255,0.1);
+                border-radius: 6px; border-left: 3px solid #0088ff; 
+                transition: all 0.2s ease; font-size: 11px; line-height: 1.4;
+            }
+            
+            #trading-tips .tip:hover {
+                background: rgba(255,255,255,0.15); transform: translateX(3px);
+                border-left-color: #00ff88;
+            }
+            
+            #trading-tips .tip-warning {
+                border-left-color: #ff4444; background: rgba(255,68,68,0.15);
+                font-weight: bold; animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+            
+            #trading-tips::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            #trading-tips::-webkit-scrollbar-track {
+                background: rgba(255,255,255,0.1); border-radius: 3px;
+            }
+            
+            #trading-tips::-webkit-scrollbar-thumb {
+                background: rgba(0,136,255,0.7); border-radius: 3px;
+            }
+            
+            #trading-tips::-webkit-scrollbar-thumb:hover {
+                background: rgba(0,136,255,0.9);
+            }
+        `;
+        
+        document.head.appendChild(style);
         
         // Dodaj samo ako već ne postoji
         if (!document.getElementById('trading-tips')) {
             document.body.appendChild(tipsContainer);
+            
+            // Auto-hide tips nakon 30 sekundi
+            setTimeout(() => {
+                if (tipsContainer.parentNode) {
+                    tipsContainer.style.animation = 'slideInLeft 0.5s ease-out reverse';
+                    setTimeout(() => {
+                        if (tipsContainer.parentNode) {
+                            tipsContainer.parentNode.removeChild(tipsContainer);
+                        }
+                    }, 500);
+                }
+            }, 30000);
+            
+            console.log('📝 Trading tips dodani u UI');
         }
     }
 
