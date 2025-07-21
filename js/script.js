@@ -129,52 +129,19 @@ class TradingDashboard {
     }
 
     addPredictionRefreshControls() {
-        // Proverava da li kontrole već postoje
-        if (document.getElementById('prediction-refresh-rate')) {
-            console.log('⚠️ Prediction refresh kontrole već postoje, preskačem dodavanje');
-            return;
-        }
+        // SKIP - kontrole su već u HTML-u da izbegnemo duplikate
+        console.log('⚠️ Prediction refresh kontrole se čitaju iz HTML-a');
         
-        // Dodaj kontrole za refresh rate u predictions panel - SAMO JEDNOM
-        const predictionsPanel = document.querySelector('.predictions-panel');
-        if (predictionsPanel && !predictionsPanel.querySelector('.prediction-refresh-controls')) {
-            const controlsHTML = `
-                <div class="prediction-refresh-controls">
-                    <label>🔄 Automatsko ažuriranje:</label>
-                    <select id="prediction-refresh-rate" class="refresh-rate-select">
-                        <option value="intelligent" selected>📊 Pametno (po timeframe-u)</option>
-                        <option value="15min">⚡ Svakkih 15 minuta</option>
-                        <option value="30min">🔄 Svakkih 30 minuta</option>
-                        <option value="1h">⏰ Svaki sat</option>
-                        <option value="1d">📅 Jednom dnevno</option>
-                    </select>
-                    <div class="refresh-status" id="refreshStatus">
-                        ✅ Pametno ažuriranje aktivno - svaki timeframe se ažurira logički
-                    </div>
-                </div>
-            `;
-            
-            // Dodaj na vrh predictions panel-a
-            predictionsPanel.insertAdjacentHTML('afterbegin', controlsHTML);
-            
-            // Setup event listener
-            const refreshSelect = document.getElementById('prediction-refresh-rate');
-            if (refreshSelect) {
-                refreshSelect.addEventListener('change', (e) => {
-                    this.predictionRefreshRate = e.target.value;
-                    localStorage.setItem('predictionRefreshRate', this.predictionRefreshRate);
-                    
-                    if (e.target.value === 'intelligent') {
-                        this.startIntelligentPredictionRefresh();
-                        document.getElementById('refreshStatus').textContent = '✅ Pametno ažuriranje aktivno - svaki timeframe se ažurira logički';
-                    } else {
-                        this.startLegacyPredictionRefresh();
-                        document.getElementById('refreshStatus').textContent = `🔄 Ažuriranje svih predviđanja svakih ${e.target.value}`;
-                    }
-                    
-                    console.log(`✅ Prediction refresh mode promenjen na: ${e.target.value}`);
-                });
-            }
+        // Samo setup event listener
+        const refreshSelect = document.getElementById('prediction-refresh-rate');
+        if (refreshSelect) {
+            refreshSelect.value = this.predictionRefreshRate;
+            refreshSelect.addEventListener('change', (e) => {
+                this.predictionRefreshRate = e.target.value;
+                localStorage.setItem('predictionRefreshRate', this.predictionRefreshRate);
+                console.log(`🔄 Promenjen refresh rate na: ${this.predictionRefreshRate}`);
+                this.startIntelligentPredictionRefresh();
+            });
         }
     }
 
