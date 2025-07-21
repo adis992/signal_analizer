@@ -213,6 +213,14 @@ class TradingDashboard {
                     volume: parseFloat(ticker.volume)
                 }));
             
+            // Cache fresh data za brži pristup
+            this.cryptoData = {};
+            filteredData.forEach(crypto => {
+                this.cryptoData[crypto.symbol] = crypto;
+            });
+            
+            console.log(`💰 Cache ažuriran sa ${filteredData.length} crypto valuta. SOLUSDT: $${this.cryptoData['SOLUSDT']?.price || 'N/A'}`);
+            
             return filteredData;
         } catch (error) {
             console.error('❌ GREŠKA: Binance API nedostupan:', error);
