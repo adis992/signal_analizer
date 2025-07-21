@@ -1,8 +1,12 @@
 # 🚀 CRYPTO SIGNAL TRACKER
 
-**PROFESSIONAL SIGNAL TRACKER - Premium Crypto Analiza**
+**PROFESSIONAL SIGNAL TRACKER - Premium Crypto Ana## ⚠️ Disclaimer
 
-![Crypto Tracker](https://img.shields.io/badge/Crypto-Trading-blue)
+Ova aplikacija je za edukacione svrhe. Signali nisu finansijski saveti. Uvek radite vlastito istraživanje pre investiranja.
+
+---
+
+**Made with ❤️ by TARIK's Team | Powered by Binance API** 🚀💎pto Tracker](https://img.shields.io/badge/Crypto-Trading-blue)
 ![Real Time](https://img.shields.io/badge/Real%20Time-Binance%20API-green)
 ![Serbian](https://img.shields.io/badge/Language-Serbian-red)
 ![DOGE](https://img.shields.io/badge/Special-DOGE%20for%20TARIK-yellow)
