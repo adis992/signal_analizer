@@ -263,6 +263,127 @@
         .loading {
             animation: pulse 1.5s infinite;
         }
+
+        /* 📱 MOBILE OPTIMIZATIONS */
+        @media (max-width: 768px) {
+            .debug-header {
+                padding: 15px 10px;
+            }
+
+            .debug-header h1 {
+                font-size: 1.8rem;
+                margin-bottom: 10px;
+            }
+
+            .navigation-menu {
+                gap: 10px;
+                margin: 10px 0;
+            }
+
+            .nav-link {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                border-radius: 8px;
+            }
+
+            .debug-container {
+                padding: 10px;
+            }
+
+            .debug-tabs {
+                gap: 5px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 5px;
+            }
+
+            .tab-button {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+                white-space: nowrap;
+                min-width: 80px;
+            }
+
+            .debug-content {
+                padding: 15px 10px;
+            }
+
+            .metric-card {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+            }
+
+            .debug-log {
+                padding: 10px;
+                font-size: 0.8rem;
+                max-height: 200px;
+            }
+
+            .pattern-table {
+                font-size: 0.8rem;
+            }
+
+            .pattern-table th,
+            .pattern-table td {
+                padding: 6px 4px;
+            }
+        }
+
+        /* 📱 EXTRA SMALL SCREENS */
+        @media (max-width: 480px) {
+            .debug-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav-link {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .debug-container {
+                padding: 5px;
+            }
+
+            .tab-button {
+                padding: 6px 10px;
+                font-size: 0.7rem;
+                min-width: 70px;
+            }
+
+            .debug-content {
+                padding: 10px 5px;
+            }
+
+            .metric-card {
+                padding: 10px;
+            }
+
+            .metric-value {
+                font-size: 1.3rem;
+            }
+
+            .debug-log {
+                padding: 8px;
+                font-size: 0.7rem;
+                max-height: 150px;
+            }
+
+            .pattern-table {
+                font-size: 0.7rem;
+            }
+
+            .floating-status {
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+                border-radius: 15px;
+            }
+        }
     </style>
 </head>
 <body>
