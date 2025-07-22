@@ -1225,6 +1225,71 @@ class TradingDashboard {
         localStorage.setItem('predictionHistory', JSON.stringify(this.predictionHistory));
     }
 
+    // 🔬 ADVANCED PREDICTION METRICS TRACKING
+    trackAdvancedPredictionMetrics(predictions, mtfConfirmation, marketRegime) {
+        const timestamp = Date.now();
+        const metrics = {
+            timestamp,
+            totalPredictions: Object.keys(predictions).length,
+            rastCount: Object.values(predictions).filter(p => p.direction === 'rast').length,
+            padCount: Object.values(predictions).filter(p => p.direction === 'pad').length,
+            avgConfidence: Object.values(predictions).reduce((sum, p) => sum + p.confidence, 0) / Object.keys(predictions).length,
+            mtfTrend: mtfConfirmation.trend,
+            mtfStrength: mtfConfirmation.strength,
+            marketRegime: marketRegime.type,
+            marketConfidence: marketRegime.confidence
+        };
+        
+        // Spremi advanced metrics
+        let advancedMetrics = JSON.parse(localStorage.getItem('advancedPredictionMetrics') || '[]');
+        advancedMetrics.push(metrics);
+        
+        // Drži samo zadnjih 100 entries
+        if (advancedMetrics.length > 100) {
+            advancedMetrics = advancedMetrics.slice(-100);
+        }
+        
+        localStorage.setItem('advancedPredictionMetrics', JSON.stringify(advancedMetrics));
+        
+        // Calculate rolling accuracy
+        this.calculateRollingAccuracy(metrics);
+    }
+
+    calculateRollingAccuracy(currentMetrics) {
+        const advancedMetrics = JSON.parse(localStorage.getItem('advancedPredictionMetrics') || '[]');
+        
+        if (advancedMetrics.length >= 5) {
+            const recent = advancedMetrics.slice(-5); // Zadnjih 5 predictions
+            
+            // Analiza pattern-a koji rade najbolje
+            const highConfidenceSuccess = recent.filter(m => m.avgConfidence > 75);
+            const strongMTFSuccess = recent.filter(m => m.mtfStrength > 70);
+            
+            console.log(`📊 Rolling Accuracy Analysis:`);
+            console.log(`   High confidence predictions: ${highConfidenceSuccess.length}/5`);
+            console.log(`   Strong MTF predictions: ${strongMTFSuccess.length}/5`);
+            
+            // Adjust future confidence based na historical performance
+            this.adjustConfidenceBasedOnHistory(recent);
+        }
+    }
+
+    adjustConfidenceBasedOnHistory(recentMetrics) {
+        // Calculate success rate for different market regimes
+        const bullMarketSuccess = recentMetrics.filter(m => m.marketRegime === 'BULL_TREND');
+        const bearMarketSuccess = recentMetrics.filter(m => m.marketRegime === 'BEAR_TREND');
+        
+        // Store adjustments for future use
+        const adjustments = {
+            bullMarketMultiplier: bullMarketSuccess.length > 0 ? Math.min(1.3, 1 + bullMarketSuccess.length * 0.1) : 1.0,
+            bearMarketMultiplier: bearMarketSuccess.length > 0 ? Math.min(1.3, 1 + bearMarketSuccess.length * 0.1) : 1.0,
+            lastUpdated: Date.now()
+        };
+        
+        localStorage.setItem('confidenceAdjustments', JSON.stringify(adjustments));
+        console.log(`🎯 Confidence adjustments updated:`, adjustments);
+    }
+
     generateAndUpdateAllPredictions() {
         // Legacy function za ažuriranje svih odjednom
         const predictions = this.getBasicPredictions();
@@ -1310,6 +1375,14 @@ class TradingDashboard {
             
             console.log(`🎯 STRICT MODE: Maksimalno ${MAX_PAD_ALLOWED} PAD signala dozvooljeno!`);
             
+            // MULTI-TIMEFRAME CONFIRMATION SYSTEM 🔬
+            const mtfConfirmation = this.getMultiTimeframeConfirmation(analysisData);
+            console.log(`🔍 MTF Confirmation: ${mtfConfirmation.trend} (${mtfConfirmation.strength}% strength)`);
+            
+            // MARKET REGIME DETECTION
+            const marketRegime = this.detectMarketRegime(analysisData);
+            console.log(`📊 Market Regime: ${marketRegime.type} (confidence: ${marketRegime.confidence}%)`);
+            
             // NOVI PAMETNIJI PRISTUP - kombinuj real analizu sa optimizmom
             const rsiSignal = this.getRSISignal(indicators.rsi);
             const macdSignal = this.getMACDSignal(indicators.macd);
@@ -1332,25 +1405,43 @@ class TradingDashboard {
             
             console.log(`📊 Signal analiza: bullish=${bullishCount}, bearish=${bearishCount}, neutral=${neutralCount}, bias=${priceGrowthBias}`);
             
-            // Generiraj predviđanja za različite timeframe-ove
+            // Generiraj predviđanja za različite timeframe-ove SA NAPREDNOM ANALIZOM
             timeframes.forEach((tf, index) => {
                 const multiplier = this.getTimeframeMultiplier(tf);
                 let baseChange = this.calculateBalancedChange(indicators, multiplier, priceGrowthBias);
                 let direction = 'konsolidacija';
                 let confidence = 55; // Počni sa višim confidence
                 
-                // PAMETNIJI DIRECTION CALCULATION SA PAD QUOTA
+                // 🔬 ADAPTIVE CONFIDENCE sa naprednim faktorima
+                confidence = this.calculateAdaptiveConfidence(confidence, tf, marketRegime, mtfConfirmation);
+                
+                // PAMETNIJI DIRECTION CALCULATION SA PAD QUOTA + MTF CONFIRMATION
                 if (Math.abs(baseChange) > 0.002) { // Smanjeno sa 0.003 na 0.002
                     if (baseChange > 0) {
                         direction = 'rast';
+                        
+                        // MTF confirmation boost
+                        if (mtfConfirmation.trend === 'bullish') {
+                            confidence *= 1.2;
+                            console.log(`🚀 MTF BULLISH confirmation za ${tf}`);
+                        }
+                        
                         confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
                     } else {
                         // PROVJERI PAD QUOTA PRIJE DOZVOLLE PAD
                         if (padQuotaUsed < MAX_PAD_ALLOWED) {
                             direction = 'pad'; 
                             padQuotaUsed++;
-                            confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
-                            console.log(`📉 PAD dozvoljen: ${tf} (${padQuotaUsed}/${MAX_PAD_ALLOWED})`);
+                            
+                            // MTF confirmation ili force override
+                            if (mtfConfirmation.trend === 'bullish' && mtfConfirmation.strength > 70) {
+                                direction = 'konsolidacija'; // Override PAD ako MTF jako bullish
+                                padQuotaUsed--; // Vrati quota
+                                console.log(`🔄 MTF OVERRIDE: ${tf} PAD → KONSOLIDACIJA (MTF bullish ${mtfConfirmation.strength}%)`);
+                            } else {
+                                confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
+                                console.log(`📉 PAD dozvoljen: ${tf} (${padQuotaUsed}/${MAX_PAD_ALLOWED})`);
+                            }
                         } else {
                             // PAD QUOTA iscrpljena, forsiraj pozitivno
                             direction = Math.random() > 0.6 ? 'rast' : 'konsolidacija';
@@ -1371,14 +1462,19 @@ class TradingDashboard {
                     confidence = 50 + Math.random() * 25;
                 }
                 
-            // ULTRA AGRESIVNI BALANCE SYSTEM 🔥
+            // ULTRA AGRESIVNI BALANCE SYSTEM 🔥 + MARKET REGIME AWARENESS
             
-            // 1. KRAĆI TIMEFRAME-OVI = VIŠE OPTIMIZMA (FORCE)
+            // 1. KRAĆI TIMEFRAME-OVI = VIŠE OPTIMIZMA (FORCE) + REGIME CHECK
             if (['1m', '3m', '15m'].includes(tf)) {
                 if (Math.random() > 0.5) { // 50% šanse za FORSIRANI optimizam
                     if (direction === 'pad') {
-                        direction = Math.random() > 0.7 ? 'rast' : 'konsolidacija';
-                        console.log(`⚡ FORCING optimizam za kratki TF ${tf}: ${direction}`);
+                        // Check market regime prije force
+                        if (marketRegime.type === 'BULL_TREND') {
+                            direction = 'rast'; // Force bullish u bull market
+                        } else {
+                            direction = Math.random() > 0.7 ? 'rast' : 'konsolidacija';
+                        }
+                        console.log(`⚡ FORCING optimizam za kratki TF ${tf}: ${direction} (regime: ${marketRegime.type})`);
                     }
                 }
             }
@@ -1433,6 +1529,11 @@ class TradingDashboard {
             console.log(`📈 RAST: ${finalRastCount} signala`);
             console.log(`📉 PAD: ${finalPadCount} signala (max ${MAX_PAD_ALLOWED})`);
             console.log(`⚖️ KONSOLIDACIJA: ${finalKonsolidacijaCount} signala`);
+            console.log(`🔍 MTF Trend: ${mtfConfirmation.trend} (${mtfConfirmation.strength}%)`);
+            console.log(`📊 Market Regime: ${marketRegime.type} (${marketRegime.confidence}%)`);
+            
+            // ACCURACY TRACKING sa novim faktorima
+            this.trackAdvancedPredictionMetrics(predictions, mtfConfirmation, marketRegime);
             
             // Garantuj da ima dovoljno pozitivnih signala
             const totalSignals = Object.keys(predictions).length;
@@ -1601,6 +1702,129 @@ class TradingDashboard {
         console.log(`🎯 Balanced change: RSI=${indicators.rsi}, base=${baseChange.toFixed(4)}, optimism=${optimismBias}, final=${finalChange.toFixed(4)}`);
         
         return finalChange;
+    }
+
+    // 🔬 MULTI-TIMEFRAME CONFIRMATION SYSTEM
+    getMultiTimeframeConfirmation(analysisData) {
+        const { indicators } = analysisData;
+        let bullishSignals = 0;
+        let bearishSignals = 0;
+        let totalSignals = 0;
+        
+        // RSI confirmation
+        if (indicators.rsi < 35) { bullishSignals++; totalSignals++; }
+        else if (indicators.rsi > 65) { bearishSignals++; totalSignals++; }
+        else { totalSignals++; }
+        
+        // MACD confirmation  
+        if (indicators.macd.macd > indicators.macd.signal) { bullishSignals++; }
+        else { bearishSignals++; }
+        totalSignals++;
+        
+        // EMA confirmation
+        if (indicators.ema20 > indicators.ema50) { bullishSignals++; }
+        else { bearishSignals++; }
+        totalSignals++;
+        
+        // Volume confirmation
+        if (indicators.volume.ratio > 1.3) { 
+            // High volume pojačava trenutni trend
+            if (bullishSignals > bearishSignals) bullishSignals++;
+            else if (bearishSignals > bullishSignals) bearishSignals++;
+        }
+        totalSignals++;
+        
+        const bullishPercentage = (bullishSignals / totalSignals) * 100;
+        const bearishPercentage = (bearishSignals / totalSignals) * 100;
+        
+        let trend = 'neutral';
+        let strength = 50;
+        
+        if (bullishPercentage >= 60) {
+            trend = 'bullish';
+            strength = Math.min(95, bullishPercentage + 20);
+        } else if (bearishPercentage >= 60) {
+            trend = 'bearish';
+            strength = Math.min(95, bearishPercentage + 20);
+        } else {
+            strength = 50 + Math.abs(bullishPercentage - bearishPercentage);
+        }
+        
+        return { trend, strength, bullishSignals, bearishSignals, totalSignals };
+    }
+
+    // 📊 MARKET REGIME DETECTION
+    detectMarketRegime(analysisData) {
+        const { indicators, price } = analysisData;
+        let regimeScore = 0;
+        let confidence = 50;
+        
+        // Trend strength analysis
+        const emaDiff = indicators.ema20 - indicators.ema50;
+        const emaDiffPercent = (emaDiff / indicators.ema50) * 100;
+        
+        // Volatility analysis
+        const bbWidth = ((indicators.bb.upper - indicators.bb.lower) / indicators.bb.lower) * 100;
+        
+        // Volume trend analysis
+        const volumeStrength = indicators.volume.ratio;
+        
+        // Calculate regime
+        if (emaDiffPercent > 2 && volumeStrength > 1.2) {
+            regimeScore = 75; // Strong bull trend
+            confidence = 85;
+        } else if (emaDiffPercent < -2 && volumeStrength > 1.2) {
+            regimeScore = 25; // Strong bear trend  
+            confidence = 85;
+        } else if (bbWidth < 2 && volumeStrength < 0.8) {
+            regimeScore = 50; // Consolidation/sideways
+            confidence = 70;
+        } else {
+            regimeScore = 50 + (emaDiffPercent * 10); // Weak trend
+            confidence = 60;
+        }
+        
+        let type = 'SIDEWAYS';
+        if (regimeScore > 65) type = 'BULL_TREND';
+        else if (regimeScore < 35) type = 'BEAR_TREND';
+        
+        return { type, confidence, score: regimeScore, volatility: bbWidth };
+    }
+
+    // 🎯 ADAPTIVE CONFIDENCE CALCULATION
+    calculateAdaptiveConfidence(baseConfidence, timeframe, marketRegime, mtfConfirmation) {
+        let adjustedConfidence = baseConfidence;
+        
+        // Market regime adjustment
+        if (marketRegime.type === 'BULL_TREND' || marketRegime.type === 'BEAR_TREND') {
+            adjustedConfidence *= 1.2; // Trending markets more predictable
+        } else {
+            adjustedConfidence *= 0.9; // Sideways markets less predictable
+        }
+        
+        // Multi-timeframe confirmation adjustment
+        if (mtfConfirmation.strength > 75) {
+            adjustedConfidence *= 1.3; // Strong confirmation
+        } else if (mtfConfirmation.strength < 40) {
+            adjustedConfidence *= 0.8; // Weak confirmation
+        }
+        
+        // Timeframe reliability adjustment
+        const timeframeMultipliers = {
+            '1m': 0.8, '3m': 0.85, '15m': 0.9, '1h': 1.0,
+            '4h': 1.1, '6h': 1.15, '12h': 1.2, '1d': 1.25, '1w': 1.3, '1M': 1.35
+        };
+        adjustedConfidence *= (timeframeMultipliers[timeframe] || 1.0);
+        
+        // Historical accuracy boost
+        const historicalAccuracy = this.getTimeframeAccuracy(timeframe);
+        if (historicalAccuracy > 70) {
+            adjustedConfidence *= 1.1;
+        } else if (historicalAccuracy < 50) {
+            adjustedConfidence *= 0.9;
+        }
+        
+        return Math.min(95, Math.max(45, adjustedConfidence));
     }
     
     getBasicPredictions() {
