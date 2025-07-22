@@ -424,14 +424,17 @@
     </div>
 
     <!-- JavaScript -->
-    <script src="js/debug-panel.js"></script>
+    <script src="js/ml-accuracy-enhancer.js"></script>
+    <script src="js/debug-panel-core.js"></script>
     <script>
         // Initialize debug panel
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🔬 Debug Panel started');
-            initializeDebugPanel();
-            checkSystemHealth();
-            setInterval(updateLiveMetrics, 5000); // Update every 5 seconds
+            
+            // Initialize debug panel with ML support
+            window.debugPanel = new DebugPanel();
+            
+            console.log('✅ Debug Panel initialized with ML support');
         });
     </script>
 </body>

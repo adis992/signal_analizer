@@ -50,6 +50,25 @@ class DebugPanel {
                 return true;
             }
             
+            // STANDALONE MODE - direct access without main dashboard
+            this.log('🔧 No main dashboard connection, switching to standalone mode', 'warning');
+            this.isConnected = true;
+            this.updateConnectionStatus('warning', 'Standalone mode - Limited functionality');
+            
+            // Try to load ML enhancer directly
+            if (typeof MLAccuracyEnhancer !== 'undefined') {
+                this.mlEnhancer = new MLAccuracyEnhancer();
+                this.log('✅ ML Enhancer loaded in standalone mode', 'success');
+            } else {
+                this.log('⚠️ ML Enhancer not available in standalone mode', 'warning');
+            }
+            
+            return true;
+            
+        } catch (error) {
+            this.log(`❌ Connection error: ${error.message}`, 'error');
+            this.addError('Connection Error', error.message);
+            
             // Fallback to simulated data
             if (this.connectionAttempts >= 3) {
                 this.log('⚠️ Using simulated data mode', 'warning');
@@ -60,17 +79,6 @@ class DebugPanel {
             
             // Retry after delay
             setTimeout(() => this.connectToMainDashboard(), 3000);
-            
-        } catch (error) {
-            this.log(`❌ Connection error: ${error.message}`, 'error');
-            this.addError('Connection Error', error.message);
-            
-            if (this.connectionAttempts >= 5) {
-                this.updateConnectionStatus('error', 'Connection failed');
-                this.useSimulatedData();
-            } else {
-                setTimeout(() => this.connectToMainDashboard(), 5000);
-            }
         }
         
         return false;
