@@ -1102,6 +1102,9 @@ class TradingDashboard {
 
     // 📊 NOVA FUNKCIJA: Ažuriranje timeframe tabele
     updateTimeframeTable(predictions, analysisData) {
+        console.log('📊 UPDATING TIMEFRAME TABLE:', predictions);
+        console.log('📊 Analysis data:', analysisData);
+        
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '1d', '1w', '1M'];
         
         let summaryStats = {
@@ -1115,6 +1118,8 @@ class TradingDashboard {
         };
         
         timeframes.forEach(tf => {
+            console.log(`🎯 Processing timeframe: ${tf}`, predictions[tf]);
+            
             if (predictions[tf]) {
                 const prediction = predictions[tf];
                 
@@ -1123,23 +1128,29 @@ class TradingDashboard {
                 const changeElement = document.getElementById(`tf-change-${tf}`);
                 const confidenceElement = document.getElementById(`tf-confidence-${tf}`);
                 
+                console.log(`📍 Elements for ${tf}:`, { directionElement, changeElement, confidenceElement });
+                
                 if (directionElement) {
                     const directionText = this.translateDirection(prediction.direction);
                     directionElement.textContent = directionText;
                     directionElement.className = `td direction-cell ${prediction.direction}`;
+                    console.log(`✅ Updated direction for ${tf}: ${directionText}`);
                 }
                 
                 if (changeElement) {
                     changeElement.textContent = `${prediction.changePercent.toFixed(2)}%`;
                     changeElement.className = `td change-cell ${prediction.direction}`;
+                    console.log(`✅ Updated change for ${tf}: ${prediction.changePercent.toFixed(2)}%`);
                 }
                 
                 if (confidenceElement) {
                     confidenceElement.textContent = `${prediction.confidence.toFixed(1)}%`;
+                    console.log(`✅ Updated confidence for ${tf}: ${prediction.confidence.toFixed(1)}%`);
                 }
                 
                 // Kalkuliraj individual indicator signale za ovaj timeframe
                 const indicators = this.calculateTimeframeIndicators(tf, analysisData);
+                console.log(`🔍 Indicators for ${tf}:`, indicators);
                 this.updateTimeframeIndicators(tf, indicators);
                 
                 // Dodaj u summary stats
@@ -1211,12 +1222,18 @@ class TradingDashboard {
 
     // Ažuriraj individual indicators za specifični timeframe
     updateTimeframeIndicators(timeframe, indicators) {
+        console.log(`🔧 Updating indicators for ${timeframe}:`, indicators);
+        
         const rsiElement = document.getElementById(`tf-rsi-${timeframe}`);
         const macdElement = document.getElementById(`tf-macd-${timeframe}`);
         const bbElement = document.getElementById(`tf-bb-${timeframe}`);
         const volumeElement = document.getElementById(`tf-volume-${timeframe}`);
         const emaElement = document.getElementById(`tf-ema-${timeframe}`);
         const totalElement = document.getElementById(`tf-total-${timeframe}`);
+        
+        console.log(`🔍 Elements for indicators ${timeframe}:`, {
+            rsiElement, macdElement, bbElement, volumeElement, emaElement, totalElement
+        });
         
         // RSI
         if (rsiElement) {
