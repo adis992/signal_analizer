@@ -80,6 +80,38 @@ body {
     font-size: 1.2em;
 }
 
+/* Debug Panel Access Button */
+.debug-panel-access {
+    display: flex;
+    align-items: center;
+}
+
+.debug-btn {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.debug-btn:hover {
+    background: linear-gradient(45deg, #ff5252, #f44336);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.debug-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
 /* Main Dashboard Grid */
 .main-dashboard {
     margin-bottom: 40px;
@@ -415,6 +447,174 @@ body {
 .confidence-value {
     color: #00ff88;
     font-size: 1.1rem;
+}
+
+/* TIMEFRAME ANALYSIS TABLE */
+.timeframe-analysis-container {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 200, 255, 0.1));
+    border-radius: 15px;
+    padding: 20px;
+    margin: 25px 0;
+    border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.timeframe-analysis-container h3 {
+    color: #00ff88;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+}
+
+.timeframe-table {
+    display: grid;
+    grid-template-columns: 80px 80px 80px 90px 60px 60px 60px 60px 60px 70px 80px;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 10px;
+    overflow-x: auto;
+}
+
+.table-header {
+    display: contents;
+}
+
+.th {
+    background: linear-gradient(135deg, #00ff88, #00c8ff);
+    color: #000;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 8px 4px;
+    text-align: center;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+
+.table-row {
+    display: contents;
+}
+
+.td {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 11px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeframe-name {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.direction-cell.rast {
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff88;
+}
+
+.direction-cell.pad {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff6b6b;
+}
+
+.direction-cell.konsolidacija {
+    background: rgba(255, 255, 0, 0.2);
+    color: #ffd700;
+}
+
+.change-cell {
+    font-weight: bold;
+}
+
+.confidence-cell {
+    color: #00c8ff;
+}
+
+.indicator-cell.bullish {
+    background: rgba(0, 255, 0, 0.2);
+    color: #00ff88;
+}
+
+.indicator-cell.bearish {
+    background: rgba(255, 0, 0, 0.2);
+    color: #ff6b6b;
+}
+
+.indicator-cell.neutral {
+    background: rgba(128, 128, 128, 0.2);
+    color: #ccc;
+}
+
+.total-cell {
+    font-weight: bold;
+    color: #00ff88;
+}
+
+.refresh-cell {
+    font-size: 10px;
+    color: #888;
+}
+
+.summary-row .td {
+    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 255, 0.2));
+    font-weight: bold;
+    border: 2px solid rgba(0, 255, 136, 0.3);
+}
+
+.summary-label {
+    color: #00ff88 !important;
+    font-size: 12px !important;
+}
+
+.summary-direction {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.summary-confidence {
+    color: #00c8ff;
+    font-size: 12px;
+}
+
+.summary-total {
+    color: #00ff88;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+    .timeframe-table {
+        grid-template-columns: 60px 70px 70px 80px 50px 50px 50px 50px 50px 60px 70px;
+        font-size: 10px;
+    }
+    
+    .th, .td {
+        font-size: 10px;
+        padding: 6px 2px;
+    }
+}
+
+@media (max-width: 900px) {
+    .timeframe-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .table-header, .table-row {
+        display: table-row;
+    }
+    
+    .th, .td {
+        display: table-cell;
+        min-width: 60px;
+    }
 }
 
 /* Main Prediction Panel */

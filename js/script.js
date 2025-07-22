@@ -15,7 +15,17 @@ class TradingDashboard {
         this.refreshIntervals = [];
         this.intelligentRefreshActive = false;
         this.predictionHistory = {};
+        this.lastAnalysisData = null; // Store za poslednje analysis data
         this.loadPredictionHistory();
+        
+        // 🔍 VERIFICATION: Log successful initialization
+        console.log('✅ TradingDashboard initialized successfully');
+        if (typeof DebugPanel !== 'undefined') {
+            DebugPanel.logSuccess('TradingDashboard core system initialized');
+        }
+        
+        // Store initialization timestamp
+        localStorage.setItem('lastSystemInit', Date.now().toString());
         
         // Lista popularnih crypto parova + DOGE za Tarika! 😂
         this.cryptoSymbols = [
@@ -417,6 +427,9 @@ class TradingDashboard {
             // Generiši stvarnu tehničku analizu
             const analysisData = await this.generateTechnicalAnalysis(symbol);
             const predictions = await this.generateSmartPredictions(symbol, analysisData);
+            
+            // Store analysis data za tabelu
+            this.lastAnalysisData = analysisData;
             
             console.log('📊 Podaci generisani:', { analysisData, predictions });
             
@@ -1029,6 +1042,9 @@ class TradingDashboard {
         const currentPrice = analysisData ? analysisData.price : this.getCurrentPrice();
         this.updateMainSignal(predictions, currentPrice);
         
+        // Ažuriraj individual timeframe tabelu
+        this.updateTimeframeTable(predictions, analysisData);
+        
         // Svi timeframe elementi sa boljim prikazom
         const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
         
@@ -1068,6 +1084,220 @@ class TradingDashboard {
                 }
             }
         });
+    }
+
+    // 📊 NOVA FUNKCIJA: Ažuriranje timeframe tabele
+    updateTimeframeTable(predictions, analysisData) {
+        const timeframes = ['1m', '3m', '15m', '1h', '4h', '1d', '1w', '1M'];
+        
+        let summaryStats = {
+            totalRast: 0,
+            totalPad: 0,
+            totalKonsolidacija: 0,
+            avgConfidence: 0,
+            totalBullishIndicators: 0,
+            totalBearishIndicators: 0,
+            totalNeutralIndicators: 0
+        };
+        
+        timeframes.forEach(tf => {
+            if (predictions[tf]) {
+                const prediction = predictions[tf];
+                
+                // Ažuriraj direction i change
+                const directionElement = document.getElementById(`tf-direction-${tf}`);
+                const changeElement = document.getElementById(`tf-change-${tf}`);
+                const confidenceElement = document.getElementById(`tf-confidence-${tf}`);
+                
+                if (directionElement) {
+                    const directionText = this.translateDirection(prediction.direction);
+                    directionElement.textContent = directionText;
+                    directionElement.className = `td direction-cell ${prediction.direction}`;
+                }
+                
+                if (changeElement) {
+                    changeElement.textContent = `${prediction.changePercent.toFixed(2)}%`;
+                    changeElement.className = `td change-cell ${prediction.direction}`;
+                }
+                
+                if (confidenceElement) {
+                    confidenceElement.textContent = `${prediction.confidence.toFixed(1)}%`;
+                }
+                
+                // Kalkuliraj individual indicator signale za ovaj timeframe
+                const indicators = this.calculateTimeframeIndicators(tf, analysisData);
+                this.updateTimeframeIndicators(tf, indicators);
+                
+                // Dodaj u summary stats
+                if (prediction.direction === 'rast') summaryStats.totalRast++;
+                else if (prediction.direction === 'pad') summaryStats.totalPad++;
+                else summaryStats.totalKonsolidacija++;
+                
+                summaryStats.avgConfidence += prediction.confidence;
+                summaryStats.totalBullishIndicators += indicators.bullish;
+                summaryStats.totalBearishIndicators += indicators.bearish;
+                summaryStats.totalNeutralIndicators += indicators.neutral;
+                
+                // Ažuriraj refresh time
+                const refreshElement = document.getElementById(`tf-refresh-${tf}`);
+                if (refreshElement) {
+                    const nextUpdate = this.getNextUpdateTime(tf);
+                    refreshElement.textContent = nextUpdate;
+                }
+            }
+        });
+        
+        // Ažuriraj summary row
+        this.updateSummaryRow(summaryStats, timeframes.length);
+    }
+
+    // Kalkuliraj individual indicator signale za specifični timeframe
+    calculateTimeframeIndicators(timeframe, analysisData) {
+        if (!analysisData || !analysisData.indicators) {
+            return { bullish: 0, bearish: 0, neutral: 5, total: '0/5' };
+        }
+        
+        const { indicators, price } = analysisData;
+        let bullish = 0, bearish = 0, neutral = 0;
+        
+        // RSI signal
+        if (indicators.rsi < 30) bullish++;
+        else if (indicators.rsi > 70) bearish++;
+        else neutral++;
+        
+        // MACD signal
+        if (indicators.macd.macd > indicators.macd.signal) bullish++;
+        else bearish++;
+        
+        // Bollinger Bands signal
+        if (price <= indicators.bb.lower) bullish++;
+        else if (price >= indicators.bb.upper) bearish++;
+        else neutral++;
+        
+        // Volume signal
+        if (indicators.volume.ratio > 1.5) {
+            // Volume potvrđuje trenutni trend
+            if (bullish > bearish) bullish++;
+            else bearish++;
+        } else neutral++;
+        
+        // EMA signal
+        if (indicators.ema20 > indicators.ema50) bullish++;
+        else bearish++;
+        
+        const total = bullish + bearish + neutral;
+        
+        return {
+            bullish,
+            bearish,
+            neutral,
+            total: `${bullish}/${total}`
+        };
+    }
+
+    // Ažuriraj individual indicators za specifični timeframe
+    updateTimeframeIndicators(timeframe, indicators) {
+        const rsiElement = document.getElementById(`tf-rsi-${timeframe}`);
+        const macdElement = document.getElementById(`tf-macd-${timeframe}`);
+        const bbElement = document.getElementById(`tf-bb-${timeframe}`);
+        const volumeElement = document.getElementById(`tf-volume-${timeframe}`);
+        const emaElement = document.getElementById(`tf-ema-${timeframe}`);
+        const totalElement = document.getElementById(`tf-total-${timeframe}`);
+        
+        // RSI
+        if (rsiElement) {
+            const rsiSignal = this.getRSISignal();
+            rsiElement.textContent = rsiSignal === 'bullish' ? '📈' : rsiSignal === 'bearish' ? '📉' : '➡️';
+            rsiElement.className = `td indicator-cell ${rsiSignal}`;
+        }
+        
+        // MACD
+        if (macdElement) {
+            const macdSignal = this.getMACDSignal();
+            macdElement.textContent = macdSignal === 'bullish' ? '📈' : macdSignal === 'bearish' ? '📉' : '➡️';
+            macdElement.className = `td indicator-cell ${macdSignal}`;
+        }
+        
+        // Bollinger Bands
+        if (bbElement) {
+            const bbSignal = this.getBollingerSignal();
+            bbElement.textContent = bbSignal === 'bullish' ? '📈' : bbSignal === 'bearish' ? '📉' : '➡️';
+            bbElement.className = `td indicator-cell ${bbSignal}`;
+        }
+        
+        // Volume
+        if (volumeElement) {
+            const volumeSignal = indicators.bullish > indicators.bearish ? 'bullish' : 'bearish';
+            volumeElement.textContent = volumeSignal === 'bullish' ? '📈' : '📉';
+            volumeElement.className = `td indicator-cell ${volumeSignal}`;
+        }
+        
+        // EMA
+        if (emaElement) {
+            const emaSignal = this.getEMASignal();
+            emaElement.textContent = emaSignal === 'bullish' ? '📈' : emaSignal === 'bearish' ? '📉' : '➡️';
+            emaElement.className = `td indicator-cell ${emaSignal}`;
+        }
+        
+        // Total
+        if (totalElement) {
+            totalElement.textContent = indicators.total;
+            totalElement.className = `td total-cell`;
+        }
+    }
+
+    // Ažuriraj summary row
+    updateSummaryRow(stats, totalTimeframes) {
+        stats.avgConfidence = stats.avgConfidence / totalTimeframes;
+        
+        // Direction
+        const summaryDirection = document.getElementById('summary-direction');
+        if (summaryDirection) {
+            let overallDirection = 'NEUTRAL';
+            if (stats.totalRast > stats.totalPad) overallDirection = 'RAST';
+            else if (stats.totalPad > stats.totalRast) overallDirection = 'PAD';
+            
+            summaryDirection.textContent = overallDirection;
+            summaryDirection.className = `td summary-direction ${overallDirection.toLowerCase()}`;
+        }
+        
+        // Average change
+        const summaryChange = document.getElementById('summary-change');
+        if (summaryChange) {
+            const avgChange = ((stats.totalRast - stats.totalPad) / totalTimeframes) * 1.5;
+            summaryChange.textContent = `${avgChange.toFixed(1)}%`;
+        }
+        
+        // Average confidence
+        const summaryConfidence = document.getElementById('summary-confidence');
+        if (summaryConfidence) {
+            summaryConfidence.textContent = `${stats.avgConfidence.toFixed(1)}%`;
+        }
+        
+        // Individual indicator summaries
+        const totalIndicators = stats.totalBullishIndicators + stats.totalBearishIndicators + stats.totalNeutralIndicators;
+        
+        ['rsi', 'macd', 'bb', 'volume', 'ema'].forEach(indicator => {
+            const element = document.getElementById(`summary-${indicator}`);
+            if (element) {
+                const bullishPct = (stats.totalBullishIndicators / totalIndicators) * 100;
+                element.textContent = bullishPct > 60 ? '📈' : bullishPct < 40 ? '📉' : '➡️';
+                element.className = `td summary-indicator ${bullishPct > 60 ? 'bullish' : bullishPct < 40 ? 'bearish' : 'neutral'}`;
+            }
+        });
+        
+        // Total score
+        const summaryTotal = document.getElementById('summary-total');
+        if (summaryTotal) {
+            summaryTotal.textContent = `${stats.totalBullishIndicators}/${totalIndicators}`;
+        }
+        
+        // Status
+        const summaryStatus = document.getElementById('summary-status');
+        if (summaryStatus) {
+            const now = new Date();
+            summaryStatus.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
     }
 
     updateSpecificTimeframePrediction(timeframe) {
@@ -1317,15 +1547,15 @@ class TradingDashboard {
                 </div>
                 <div class="signal-details">
                     <div class="price-prediction">
-                        <strong>📊 Očekivana cena:</strong> $${detailedSignal.expectedPrice.toFixed(2)}
+                        <strong>📊 Očekivana cijena:</strong> $${detailedSignal.expectedPrice.toFixed(2)}
                         <span class="price-change">(${detailedSignal.direction === 'PAD' ? '-' : '+'}${detailedSignal.percentChange.toFixed(1)}%)</span>
                     </div>
                     <div class="time-prediction">
-                        <strong>⏰ Vreme do promene:</strong> ${detailedSignal.timeToChange}
+                        <strong>⏰ Vrijeme do promene:</strong> ${detailedSignal.timeToChange}
                     </div>
                     <div class="levels-prediction">
-                        <strong>📈 Resistance:</strong> $${detailedSignal.resistanceLevel.toFixed(2)} | 
-                        <strong>📉 Support:</strong> $${detailedSignal.supportLevel.toFixed(2)}
+                        <strong>📈 Resistance/OTPOR:</strong> $${detailedSignal.resistanceLevel.toFixed(2)} | 
+                        <strong>📉 Support/PODRSKA:</strong> $${detailedSignal.supportLevel.toFixed(2)}
                     </div>
                     <div class="analysis-summary">
                         <strong>🔍 Analiza:</strong> ${detailedSignal.analysis}
@@ -1364,6 +1594,7 @@ class TradingDashboard {
     async generateSmartPredictions(symbol, analysisData) {
         try {
             console.log(`🧠 Generiram ULTRA-BALANSIRANI algoritam za ${symbol}...`);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logInfo(`Starting prediction generation for ${symbol}`);
             
             const { price: currentPrice, indicators } = analysisData;
             const predictions = {};
@@ -1374,14 +1605,17 @@ class TradingDashboard {
             let padQuotaUsed = 0;
             
             console.log(`🎯 STRICT MODE: Maksimalno ${MAX_PAD_ALLOWED} PAD signala dozvooljeno!`);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logInfo(`PAD quota system active: Max ${MAX_PAD_ALLOWED} bearish signals`);
             
             // MULTI-TIMEFRAME CONFIRMATION SYSTEM 🔬
             const mtfConfirmation = this.getMultiTimeframeConfirmation(analysisData);
             console.log(`🔍 MTF Confirmation: ${mtfConfirmation.trend} (${mtfConfirmation.strength}% strength)`);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logSuccess(`MTF Analysis: ${mtfConfirmation.trend} trend, ${mtfConfirmation.strength}% strength`);
             
             // MARKET REGIME DETECTION
             const marketRegime = this.detectMarketRegime(analysisData);
             console.log(`📊 Market Regime: ${marketRegime.type} (confidence: ${marketRegime.confidence}%)`);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logSuccess(`Market Regime: ${marketRegime.type}, confidence: ${marketRegime.confidence}%`);
             
             // NOVI PAMETNIJI PRISTUP - kombinuj real analizu sa optimizmom
             const rsiSignal = this.getRSISignal(indicators.rsi);
@@ -1532,6 +1766,13 @@ class TradingDashboard {
             console.log(`🔍 MTF Trend: ${mtfConfirmation.trend} (${mtfConfirmation.strength}%)`);
             console.log(`📊 Market Regime: ${marketRegime.type} (${marketRegime.confidence}%)`);
             
+            // DEBUG PANEL LOGGING
+            if (typeof DebugPanel !== 'undefined') {
+                DebugPanel.logSuccess(`Generated ${Object.keys(predictions).length} predictions`);
+                DebugPanel.logInfo(`Distribution: ${finalRastCount} RAST, ${finalPadCount} PAD, ${finalKonsolidacijaCount} KONSOLIDACIJA`);
+                DebugPanel.logInfo(`MTF: ${mtfConfirmation.trend} (${mtfConfirmation.strength}%), Regime: ${marketRegime.type}`);
+            }
+            
             // ACCURACY TRACKING sa novim faktorima
             this.trackAdvancedPredictionMetrics(predictions, mtfConfirmation, marketRegime);
             
@@ -1553,10 +1794,16 @@ class TradingDashboard {
             }
             
             console.log(`✅ Generisao ULTRA balansirane predikce:`, predictions);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logSuccess(`Algorithm completed successfully with ${Object.keys(predictions).length} predictions`);
+            
+            // Store prediction timestamp for health monitoring
+            localStorage.setItem('lastPredictionTime', Date.now().toString());
+            
             return predictions;
             
         } catch (error) {
             console.error('❌ Greška pri generiranju predviđanja:', error);
+            if (typeof DebugPanel !== 'undefined') DebugPanel.logError(`Prediction generation failed: ${error.message}`);
             // Fallback na osnovnu analizu
             return this.getBasicPredictions();
         }
@@ -2351,5 +2598,39 @@ window.addEventListener('beforeunload', () => {
         window.tradingDashboard.destroy();
     }
 });
+
+// 🔧 DEBUG PANEL FUNCTIONS
+function openDebugPanel() {
+    console.log('🔧 Otvaranje Debug Panel-a...');
+    
+    // Provjeri da li debug panel već postoji u istom prozoru
+    if (window.debugPanelWindow && !window.debugPanelWindow.closed) {
+        window.debugPanelWindow.focus();
+        console.log('🎯 Debug panel već otvaren, fokusiram postojeći');
+        return;
+    }
+    
+    // Otvori debug panel u novom tabu/prozoru
+    const debugUrl = './debug.html';
+    window.debugPanelWindow = window.open(
+        debugUrl, 
+        'debug-panel',
+        'width=1400,height=900,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no'
+    );
+    
+    if (window.debugPanelWindow) {
+        console.log('✅ Debug Panel uspješno otvoren u novom tabu');
+        
+        // Fokusiraj novi tab nakon kratke pauze
+        setTimeout(() => {
+            if (window.debugPanelWindow && !window.debugPanelWindow.closed) {
+                window.debugPanelWindow.focus();
+            }
+        }, 500);
+    } else {
+        console.error('❌ Nije moguće otvoriti Debug Panel - popup blokiran?');
+        alert('Debug Panel nije mogao biti otvoren.\nMolimo dozvolite popup prozore ili otvorite debug.html manuelno.');
+    }
+}
 
 

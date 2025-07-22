@@ -24,6 +24,11 @@
                 <div class="precision-meter">
                     <span class="precision-value" id="last-update-time">--:--:--</span>
                 </div>
+                <div class="debug-panel-access">
+                    <button onclick="openDebugPanel()" class="debug-btn" title="Otvori Debug Panel za Monitoring">
+                        🔧 DEBUG PANEL
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -87,6 +92,154 @@
                     <div class="signal-text">Analiziram...</div>
                     <div class="signal-confidence">--% pouzdanost</div>
                     <div class="signal-description">Učitavam ukupnu analizu svih timeframe-ova...</div>
+                </div>
+            </div>
+
+            <!-- INDIVIDUAL TIMEFRAME ANALYSIS TABLE -->
+            <div class="timeframe-analysis-container">
+                <h3>📊 ANALIZA PO TIMEFRAME-OVIMA</h3>
+                <div class="timeframe-table">
+                    <div class="table-header">
+                        <div class="th">Timeframe</div>
+                        <div class="th">Smer</div>
+                        <div class="th">Promena</div>
+                        <div class="th">Pouzdanost</div>
+                        <div class="th">RSI</div>
+                        <div class="th">MACD</div>
+                        <div class="th">BB</div>
+                        <div class="th">Volume</div>
+                        <div class="th">EMA</div>
+                        <div class="th">Ukupno</div>
+                        <div class="th">Sledeće</div>
+                    </div>
+                    
+                    <!-- Individual rows for each timeframe -->
+                    <div class="table-row" id="tf-row-1m">
+                        <div class="td timeframe-name">1m</div>
+                        <div class="td direction-cell" id="tf-direction-1m">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-1m">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-1m">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-1m">--</div>
+                        <div class="td indicator-cell" id="tf-macd-1m">--</div>
+                        <div class="td indicator-cell" id="tf-bb-1m">--</div>
+                        <div class="td indicator-cell" id="tf-volume-1m">--</div>
+                        <div class="td indicator-cell" id="tf-ema-1m">--</div>
+                        <div class="td total-cell" id="tf-total-1m">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-1m">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-3m">
+                        <div class="td timeframe-name">3m</div>
+                        <div class="td direction-cell" id="tf-direction-3m">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-3m">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-3m">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-3m">--</div>
+                        <div class="td indicator-cell" id="tf-macd-3m">--</div>
+                        <div class="td indicator-cell" id="tf-bb-3m">--</div>
+                        <div class="td indicator-cell" id="tf-volume-3m">--</div>
+                        <div class="td indicator-cell" id="tf-ema-3m">--</div>
+                        <div class="td total-cell" id="tf-total-3m">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-3m">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-15m">
+                        <div class="td timeframe-name">15m</div>
+                        <div class="td direction-cell" id="tf-direction-15m">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-15m">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-15m">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-15m">--</div>
+                        <div class="td indicator-cell" id="tf-macd-15m">--</div>
+                        <div class="td indicator-cell" id="tf-bb-15m">--</div>
+                        <div class="td indicator-cell" id="tf-volume-15m">--</div>
+                        <div class="td indicator-cell" id="tf-ema-15m">--</div>
+                        <div class="td total-cell" id="tf-total-15m">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-15m">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-1h">
+                        <div class="td timeframe-name">1h</div>
+                        <div class="td direction-cell" id="tf-direction-1h">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-1h">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-1h">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-1h">--</div>
+                        <div class="td indicator-cell" id="tf-macd-1h">--</div>
+                        <div class="td indicator-cell" id="tf-bb-1h">--</div>
+                        <div class="td indicator-cell" id="tf-volume-1h">--</div>
+                        <div class="td indicator-cell" id="tf-ema-1h">--</div>
+                        <div class="td total-cell" id="tf-total-1h">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-1h">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-4h">
+                        <div class="td timeframe-name">4h</div>
+                        <div class="td direction-cell" id="tf-direction-4h">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-4h">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-4h">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-4h">--</div>
+                        <div class="td indicator-cell" id="tf-macd-4h">--</div>
+                        <div class="td indicator-cell" id="tf-bb-4h">--</div>
+                        <div class="td indicator-cell" id="tf-volume-4h">--</div>
+                        <div class="td indicator-cell" id="tf-ema-4h">--</div>
+                        <div class="td total-cell" id="tf-total-4h">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-4h">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-1d">
+                        <div class="td timeframe-name">1d</div>
+                        <div class="td direction-cell" id="tf-direction-1d">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-1d">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-1d">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-1d">--</div>
+                        <div class="td indicator-cell" id="tf-macd-1d">--</div>
+                        <div class="td indicator-cell" id="tf-bb-1d">--</div>
+                        <div class="td indicator-cell" id="tf-volume-1d">--</div>
+                        <div class="td indicator-cell" id="tf-ema-1d">--</div>
+                        <div class="td total-cell" id="tf-total-1d">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-1d">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-1w">
+                        <div class="td timeframe-name">1w</div>
+                        <div class="td direction-cell" id="tf-direction-1w">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-1w">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-1w">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-1w">--</div>
+                        <div class="td indicator-cell" id="tf-macd-1w">--</div>
+                        <div class="td indicator-cell" id="tf-bb-1w">--</div>
+                        <div class="td indicator-cell" id="tf-volume-1w">--</div>
+                        <div class="td indicator-cell" id="tf-ema-1w">--</div>
+                        <div class="td total-cell" id="tf-total-1w">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-1w">--</div>
+                    </div>
+                    
+                    <div class="table-row" id="tf-row-1M">
+                        <div class="td timeframe-name">1M</div>
+                        <div class="td direction-cell" id="tf-direction-1M">UČITAVA...</div>
+                        <div class="td change-cell" id="tf-change-1M">--</div>
+                        <div class="td confidence-cell" id="tf-confidence-1M">--</div>
+                        <div class="td indicator-cell" id="tf-rsi-1M">--</div>
+                        <div class="td indicator-cell" id="tf-macd-1M">--</div>
+                        <div class="td indicator-cell" id="tf-bb-1M">--</div>
+                        <div class="td indicator-cell" id="tf-volume-1M">--</div>
+                        <div class="td indicator-cell" id="tf-ema-1M">--</div>
+                        <div class="td total-cell" id="tf-total-1M">--/5</div>
+                        <div class="td refresh-cell" id="tf-refresh-1M">--</div>
+                    </div>
+                    
+                    <!-- SUMMARY ROW -->
+                    <div class="table-row summary-row" id="tf-summary-row">
+                        <div class="td summary-label"><strong>📊 UKUPNO</strong></div>
+                        <div class="td summary-direction" id="summary-direction">--</div>
+                        <div class="td summary-change" id="summary-change">--</div>
+                        <div class="td summary-confidence" id="summary-confidence">--</div>
+                        <div class="td summary-indicator" id="summary-rsi">--</div>
+                        <div class="td summary-indicator" id="summary-macd">--</div>
+                        <div class="td summary-indicator" id="summary-bb">--</div>
+                        <div class="td summary-indicator" id="summary-volume">--</div>
+                        <div class="td summary-indicator" id="summary-ema">--</div>
+                        <div class="td summary-total" id="summary-total">--/45</div>
+                        <div class="td summary-status" id="summary-status">--</div>
+                    </div>
                 </div>
             </div>
             
@@ -223,7 +376,7 @@
                     </div>
                     <div class="indicator-signal" id="bb-signal">UČITAVA...</div>
                     <div class="indicator-description">
-                        Volatilnost bands. Cena na donjem bandu = kupuj, na gornjem = prodaj
+                        Volatilnost bands. Cijena na donjem bandu = kupuj, na gornjem = prodaj
                     </div>
                 </div>
 
@@ -286,6 +439,8 @@
 
     <!-- Load JavaScript -->
     <script src="js/ml-accuracy-enhancer.js"></script>
+    <script src="js/system-health.js"></script>
+    <script src="js/debug-panel.js"></script>
     <script src="js/script.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/chat-v2.js"></script>

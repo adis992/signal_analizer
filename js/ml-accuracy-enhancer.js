@@ -200,21 +200,62 @@ class MLAccuracyEnhancer {
                 const data = JSON.parse(saved);
                 this.successfulPatterns = new Map(data.successful || []);
                 this.failedPatterns = new Map(data.failed || []);
-                console.log(`🧠 Učitao ${this.successfulPatterns.size} uspješnih pattern-a`);
+                console.log(`🧠 Učitao ${this.successfulPatterns.size} uspješnih pattern-a i ${this.failedPatterns.size} neuspješnih`);
+                console.log('✅ ML Pattern Database successfully loaded');
+                
+                // Create debug bridge for debug panel
+                this.createDebugBridge();
+                
             } catch (error) {
-                console.error('Greška pri učitavanju ML database:', error);
+                console.error('❌ Greška pri učitavanju ML database:', error);
+                this.successfulPatterns = new Map();
+                this.failedPatterns = new Map();
+                console.log('🔄 Initialized empty ML pattern maps');
             }
+        } else {
+            console.log('⚠️ No existing ML database found, starting fresh');
+            this.successfulPatterns = new Map();
+            this.failedPatterns = new Map();
+            this.savePatternDatabase(); // Create initial empty database
         }
         return {};
     }
 
     savePatternDatabase() {
-        const data = {
-            successful: Array.from(this.successfulPatterns.entries()),
-            failed: Array.from(this.failedPatterns.entries()),
-            lastUpdated: Date.now()
+        try {
+            const data = {
+                successful: Array.from(this.successfulPatterns.entries()),
+                failed: Array.from(this.failedPatterns.entries()),
+                lastUpdated: Date.now(),
+                version: '1.0',
+                totalPatterns: this.successfulPatterns.size + this.failedPatterns.size
+            };
+            localStorage.setItem('mlPatternDatabase', JSON.stringify(data));
+            console.log(`💾 ML Database saved: ${data.totalPatterns} total patterns`);
+            
+            // Update debug bridge
+            this.createDebugBridge();
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Error saving ML database:', error);
+            return false;
+        }
+    }
+
+    createDebugBridge() {
+        // Create bridge data for debug panel
+        const bridgeData = {
+            mlPatterns: {
+                successful: this.successfulPatterns.size,
+                failed: this.failedPatterns.size,
+                total: this.successfulPatterns.size + this.failedPatterns.size
+            },
+            lastUpdate: Date.now(),
+            isActive: true
         };
-        localStorage.setItem('mlPatternDatabase', JSON.stringify(data));
+        
+        localStorage.setItem('debugBridge', JSON.stringify(bridgeData));
     }
 
     // 5. MARKET REGIME DETECTION
