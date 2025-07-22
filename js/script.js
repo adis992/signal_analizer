@@ -10,6 +10,20 @@ class TradingDashboard {
         this.predictionUpdateInterval = null;
         this.predictionRefreshRate = localStorage.getItem('predictionRefreshRate') || '1h'; // 15min, 30min, 1h, 1d
         
+        // Initialize ML Accuracy Enhancer
+        try {
+            if (typeof MLAccuracyEnhancer !== 'undefined') {
+                this.mlEnhancer = new MLAccuracyEnhancer();
+                console.log('✅ MLAccuracyEnhancer initialized successfully');
+            } else {
+                console.warn('⚠️ MLAccuracyEnhancer not available');
+                this.mlEnhancer = null;
+            }
+        } catch (error) {
+            console.error('❌ Failed to initialize MLAccuracyEnhancer:', error);
+            this.mlEnhancer = null;
+        }
+        
         // Initialize prediction tracking
         this.currentPredictions = null;
         this.refreshIntervals = [];
@@ -1362,7 +1376,8 @@ class TradingDashboard {
             changePercent: Math.abs(change),
             confidence: confidence,
             timestamp: Date.now(),
-            timeframe: timeframe
+            timeframe: timeframe,
+            mlPattern: this.mlEnhancer ? this.mlEnhancer.generatePatternId(this.selectedCrypto, timeframe) : null
         };
     }
 
@@ -1411,6 +1426,27 @@ class TradingDashboard {
                 lastPrediction.actualChange = actualChange;
                 
                 console.log(`📊 Verifikacija ${timeframe}: ${lastPrediction.correct ? '✅ Tačno' : '❌ Netačno'}`);
+                
+                // ML ACCURACY TRACKING
+                if (this.mlEnhancer && lastPrediction.mlPattern) {
+                    try {
+                        if (lastPrediction.correct) {
+                            this.mlEnhancer.trackPredictionSuccess(lastPrediction.mlPattern, {
+                                direction: lastPrediction.direction,
+                                actualChange: actualChange
+                            });
+                            console.log('🧠 ML Success tracked for pattern');
+                        } else {
+                            this.mlEnhancer.trackPredictionFailure(lastPrediction.mlPattern, {
+                                direction: lastPrediction.direction,
+                                actualChange: actualChange
+                            });
+                            console.log('🧠 ML Failure tracked for pattern');
+                        }
+                    } catch (mlError) {
+                        console.error('❌ ML tracking failed:', mlError);
+                    }
+                }
             }
         }
         
@@ -1795,6 +1831,19 @@ class TradingDashboard {
             
             console.log(`✅ Generisao ULTRA balansirane predikce:`, predictions);
             if (typeof DebugPanel !== 'undefined') DebugPanel.logSuccess(`Algorithm completed successfully with ${Object.keys(predictions).length} predictions`);
+            
+            // ML PATTERN LEARNING - track prediction patterns
+            if (this.mlEnhancer) {
+                try {
+                    const pattern = this.mlEnhancer.extractTradingPattern(symbol, analysisData, mtfConfirmation, marketRegime);
+                    this.mlEnhancer.learnFromPattern(pattern, predictions);
+                    console.log('🧠 ML Pattern learning completed');
+                    if (typeof DebugPanel !== 'undefined') DebugPanel.logSuccess('ML pattern learning completed');
+                } catch (mlError) {
+                    console.error('❌ ML Pattern learning failed:', mlError);
+                    if (typeof DebugPanel !== 'undefined') DebugPanel.logError(`ML learning failed: ${mlError.message}`);
+                }
+            }
             
             // Store prediction timestamp for health monitoring
             localStorage.setItem('lastPredictionTime', Date.now().toString());
@@ -2599,38 +2648,19 @@ window.addEventListener('beforeunload', () => {
     }
 });
 
-// 🔧 DEBUG PANEL FUNCTIONS
-function openDebugPanel() {
-    console.log('🔧 Otvaranje Debug Panel-a...');
+// 🔧 NAVIGATION FUNCTIONS - U ISTOM PROZORU!
+function navigateToDebugPanel() {
+    console.log('🔧 Navigiram na Debug Panel u istom prozoru...');
     
-    // Provjeri da li debug panel već postoji u istom prozoru
-    if (window.debugPanelWindow && !window.debugPanelWindow.closed) {
-        window.debugPanelWindow.focus();
-        console.log('🎯 Debug panel već otvaren, fokusiram postojeći');
-        return;
-    }
+    // Jednostavno idi na debug.html u istom tabu/prozoru
+    window.location.href = './debug.html';
+}
+
+function navigateToDashboard() {
+    console.log('🏠 Navigiram na Dashboard u istom prozoru...');
     
-    // Otvori debug panel u novom tabu/prozoru
-    const debugUrl = './debug.html';
-    window.debugPanelWindow = window.open(
-        debugUrl, 
-        'debug-panel',
-        'width=1400,height=900,scrollbars=yes,resizable=yes,location=no,menubar=no,toolbar=no'
-    );
-    
-    if (window.debugPanelWindow) {
-        console.log('✅ Debug Panel uspješno otvoren u novom tabu');
-        
-        // Fokusiraj novi tab nakon kratke pauze
-        setTimeout(() => {
-            if (window.debugPanelWindow && !window.debugPanelWindow.closed) {
-                window.debugPanelWindow.focus();
-            }
-        }, 500);
-    } else {
-        console.error('❌ Nije moguće otvoriti Debug Panel - popup blokiran?');
-        alert('Debug Panel nije mogao biti otvoren.\nMolimo dozvolite popup prozore ili otvorite debug.html manuelno.');
-    }
+    // Jednostavno idi na index.html u istom tabu/prozoru  
+    window.location.href = './index.html';
 }
 
 

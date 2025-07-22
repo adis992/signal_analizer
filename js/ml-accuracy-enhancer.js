@@ -194,31 +194,45 @@ class MLAccuracyEnhancer {
     }
 
     loadPatternDatabase() {
-        const saved = localStorage.getItem('mlPatternDatabase');
-        if (saved) {
-            try {
-                const data = JSON.parse(saved);
-                this.successfulPatterns = new Map(data.successful || []);
-                this.failedPatterns = new Map(data.failed || []);
-                console.log(`🧠 Učitao ${this.successfulPatterns.size} uspješnih pattern-a i ${this.failedPatterns.size} neuspješnih`);
-                console.log('✅ ML Pattern Database successfully loaded');
-                
-                // Create debug bridge for debug panel
-                this.createDebugBridge();
-                
-            } catch (error) {
-                console.error('❌ Greška pri učitavanju ML database:', error);
-                this.successfulPatterns = new Map();
-                this.failedPatterns = new Map();
-                console.log('🔄 Initialized empty ML pattern maps');
+        try {
+            const saved = localStorage.getItem('mlPatternDatabase');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    this.successfulPatterns = new Map(data.successful || []);
+                    this.failedPatterns = new Map(data.failed || []);
+                    console.log(`🧠 Učitao ${this.successfulPatterns.size} uspješnih pattern-a i ${this.failedPatterns.size} neuspješnih`);
+                    console.log('✅ PatternDatabase LOADED successfully');
+                    
+                    // Create debug bridge for debug panel
+                    this.createDebugBridge();
+                    return true;
+                    
+                } catch (parseError) {
+                    console.error('❌ JSON parsing error in PatternDatabase:', parseError);
+                    // Reset corrupted data
+                    localStorage.removeItem('mlPatternDatabase');
+                    this.initializeEmptyDatabase();
+                    return false;
+                }
+            } else {
+                console.log('⚠️ No existing PatternDatabase found, starting fresh');
+                this.initializeEmptyDatabase();
+                return true;
             }
-        } else {
-            console.log('⚠️ No existing ML database found, starting fresh');
-            this.successfulPatterns = new Map();
-            this.failedPatterns = new Map();
-            this.savePatternDatabase(); // Create initial empty database
+        } catch (error) {
+            console.error('❌ Critical error in loadPatternDatabase:', error);
+            this.initializeEmptyDatabase();
+            return false;
         }
-        return {};
+    }
+    
+    initializeEmptyDatabase() {
+        this.successfulPatterns = new Map();
+        this.failedPatterns = new Map();
+        console.log('🔄 Initialized empty PatternDatabase');
+        this.savePatternDatabase(); // Create initial empty database
+        this.createDebugBridge();
     }
 
     savePatternDatabase() {
@@ -230,32 +244,47 @@ class MLAccuracyEnhancer {
                 version: '1.0',
                 totalPatterns: this.successfulPatterns.size + this.failedPatterns.size
             };
-            localStorage.setItem('mlPatternDatabase', JSON.stringify(data));
-            console.log(`💾 ML Database saved: ${data.totalPatterns} total patterns`);
+            
+            const jsonString = JSON.stringify(data);
+            localStorage.setItem('mlPatternDatabase', jsonString);
+            console.log(`💾 PatternDatabase SAVED: ${data.totalPatterns} total patterns`);
             
             // Update debug bridge
             this.createDebugBridge();
             
             return true;
         } catch (error) {
-            console.error('❌ Error saving ML database:', error);
+            console.error('❌ CRITICAL: PatternDatabase save failed:', error);
+            // Try to clear corrupted data
+            try {
+                localStorage.removeItem('mlPatternDatabase');
+                console.log('🧹 Cleared corrupted PatternDatabase');
+            } catch (clearError) {
+                console.error('❌ Failed to clear corrupted database:', clearError);
+            }
             return false;
         }
     }
 
     createDebugBridge() {
-        // Create bridge data for debug panel
-        const bridgeData = {
-            mlPatterns: {
-                successful: this.successfulPatterns.size,
-                failed: this.failedPatterns.size,
-                total: this.successfulPatterns.size + this.failedPatterns.size
-            },
-            lastUpdate: Date.now(),
-            isActive: true
-        };
-        
-        localStorage.setItem('debugBridge', JSON.stringify(bridgeData));
+        try {
+            // Create bridge data for debug panel
+            const bridgeData = {
+                mlPatterns: {
+                    successful: this.successfulPatterns ? this.successfulPatterns.size : 0,
+                    failed: this.failedPatterns ? this.failedPatterns.size : 0,
+                    total: (this.successfulPatterns ? this.successfulPatterns.size : 0) + (this.failedPatterns ? this.failedPatterns.size : 0)
+                },
+                lastUpdate: Date.now(),
+                isActive: true,
+                status: 'operational'
+            };
+            
+            localStorage.setItem('debugBridge', JSON.stringify(bridgeData));
+            console.log('🔗 DebugBridge updated successfully');
+        } catch (error) {
+            console.error('❌ DebugBridge creation failed:', error);
+        }
     }
 
     // 5. MARKET REGIME DETECTION
@@ -286,6 +315,13 @@ class MLAccuracyEnhancer {
     weightedAverage(predictions, weights) {
         // Implementation za ensemble averaging
         return predictions[0]; // Placeholder
+    }
+    
+    // 7. PATTERN ID GENERATION
+    generatePatternId(symbol, timeframe) {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substr(2, 9);
+        return `${symbol}_${timeframe}_${timestamp}_${random}`;
     }
 }
 
