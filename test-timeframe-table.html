@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <title>🔧 Timeframe Table Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .test-result { margin: 10px 0; padding: 10px; border-left: 3px solid #00ff00; }
+        .error { color: #ff4444; border-left-color: #ff4444; }
+        .success { color: #00ff00; border-left-color: #00ff00; }
+        .warning { color: #ffaa00; border-left-color: #ffaa00; }
+        .table-test { margin: 20px 0; border: 1px solid #333; }
+        .test-element { padding: 5px; margin: 5px; background: #333; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Timeframe Table Element Test</h1>
+    <div id="test-results"></div>
+    
+    <!-- Test tabla sa elementima -->
+    <div class="table-test">
+        <h3>Test Table Elements:</h3>
+        <div class="test-element" id="tf-direction-1m">UČITAVA...</div>
+        <div class="test-element" id="tf-change-1m">--</div>
+        <div class="test-element" id="tf-confidence-1m">--</div>
+        <div class="test-element" id="tf-rsi-1m">--</div>
+    </div>
+    
+    <script>
+        const testResults = document.getElementById('test-results');
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            testResults.appendChild(div);
+        }
+        
+        // Test timeframe element existence
+        const timeframes = ['1m', '3m', '15m', '1h', '4h', '1d', '1w', '1M'];
+        
+        addResult('🚀 Testing timeframe table elements...', 'warning');
+        
+        timeframes.forEach(tf => {
+            const directionEl = document.getElementById(`tf-direction-${tf}`);
+            const changeEl = document.getElementById(`tf-change-${tf}`);
+            const confidenceEl = document.getElementById(`tf-confidence-${tf}`);
+            
+            if (directionEl) {
+                addResult(`✅ tf-direction-${tf} exists`, 'success');
+            } else {
+                addResult(`❌ tf-direction-${tf} NOT found`, 'error');
+            }
+            
+            if (changeEl) {
+                addResult(`✅ tf-change-${tf} exists`, 'success');
+            } else {
+                addResult(`❌ tf-change-${tf} NOT found`, 'error');
+            }
+            
+            if (confidenceEl) {
+                addResult(`✅ tf-confidence-${tf} exists`, 'success');
+            } else {
+                addResult(`❌ tf-confidence-${tf} NOT found`, 'error');
+            }
+        });
+        
+        // Test updating elements
+        addResult('🔧 Testing element updates...', 'warning');
+        
+        const testEl = document.getElementById('tf-direction-1m');
+        if (testEl) {
+            testEl.textContent = '📈 RAST';
+            testEl.className = 'test-element rast';
+            addResult('✅ Successfully updated tf-direction-1m', 'success');
+        } else {
+            addResult('❌ Failed to update tf-direction-1m', 'error');
+        }
+        
+        // Test mock predictions
+        addResult('🎯 Testing mock prediction updates...', 'warning');
+        
+        const mockPredictions = {
+            '1m': { direction: 'rast', changePercent: 1.25, confidence: 75.5 },
+            '3m': { direction: 'pad', changePercent: 0.8, confidence: 65.2 },
+            '15m': { direction: 'konsolidacija', changePercent: 0.3, confidence: 55.8 }
+        };
+        
+        function translateDirection(direction) {
+            const translations = {
+                'rast': '📈 RAST',
+                'pad': '📉 PAD', 
+                'konsolidacija': '⚖️ KONSOLIDACIJA'
+            };
+            return translations[direction] || direction;
+        }
+        
+        Object.keys(mockPredictions).forEach(tf => {
+            const pred = mockPredictions[tf];
+            const directionEl = document.getElementById(`tf-direction-${tf}`);
+            const changeEl = document.getElementById(`tf-change-${tf}`);
+            const confidenceEl = document.getElementById(`tf-confidence-${tf}`);
+            
+            if (directionEl) {
+                directionEl.textContent = translateDirection(pred.direction);
+                directionEl.className = `test-element ${pred.direction}`;
+                addResult(`✅ Updated direction for ${tf}: ${pred.direction}`, 'success');
+            }
+            
+            if (changeEl) {
+                changeEl.textContent = `${pred.changePercent.toFixed(2)}%`;
+                addResult(`✅ Updated change for ${tf}: ${pred.changePercent}%`, 'success');
+            }
+            
+            if (confidenceEl) {
+                confidenceEl.textContent = `${pred.confidence.toFixed(1)}%`;
+                addResult(`✅ Updated confidence for ${tf}: ${pred.confidence}%`, 'success');
+            }
+        });
+        
+        addResult('🎉 All tests completed!', 'success');
+    </script>
+</body>
+</html>

@@ -130,6 +130,12 @@ class TradingDashboard {
             clearInterval(this.predictionUpdateInterval);
         }
         
+        // Clear sve postojeće timeframe intervale
+        if (this.refreshIntervals) {
+            this.refreshIntervals.forEach(interval => clearInterval(interval));
+        }
+        this.refreshIntervals = [];
+        
         // Logički intervali za različite timeframe-ove
         const timeframeIntervals = {
             '1m': 1 * 60 * 1000,      // 1 minut
@@ -143,6 +149,11 @@ class TradingDashboard {
             '1w': 7 * 24 * 60 * 60 * 1000, // 1 sedmica
             '1M': 30 * 24 * 60 * 60 * 1000 // 1 mesec
         };
+        
+        console.log('🕐 Starting SMART timeframe refresh system...');
+        
+        // IMMEDIATE REFRESH FIRST - ažuriraj sve odmah
+        this.refreshAllTimeframes();
         
         // Pokretaj refresh za svaki timeframe pojedinačno SA THROTTLING
         Object.keys(timeframeIntervals).forEach(timeframe => {
@@ -164,14 +175,124 @@ class TradingDashboard {
                 console.log(`📅 Adjusted ${timeframe}: ažuriranje svakih 6h umjesto 7 dana`);
             }
             
-            setInterval(() => {
-                console.log(`🔄 Auto-ažuriranje ${timeframe} predviđanja...`);
+            const refreshInterval = setInterval(() => {
+                console.log(`🔄 Auto-refresh ${timeframe} predviđanja...`);
                 this.updateSpecificTimeframePrediction(timeframe);
                 this.trackPredictionAccuracy(timeframe);
+                
+                // Update next refresh time
+                this.updateNextRefreshTime(timeframe, intervalMs);
             }, intervalMs);
+            
+            this.refreshIntervals.push(refreshInterval);
+            
+            // Set initial next refresh time
+            this.updateNextRefreshTime(timeframe, intervalMs);
         });
         
         console.log('⏰ Intelligent prediction refresh pokrenut za sve timeframe-ove');
+    }
+    
+    // 🔄 NEW: Refresh all timeframes immediately
+    async refreshAllTimeframes() {
+        console.log('🚀 IMMEDIATE refresh svih timeframe-ova...');
+        
+        try {
+            // Generiraj fresh technical analysis
+            const analysisData = await this.generateTechnicalAnalysis(this.selectedCrypto);
+            const predictions = await this.generateSmartPredictions(this.selectedCrypto, analysisData);
+            
+            console.log('📊 Fresh predictions generated:', predictions);
+            
+            // Update main predictions display
+            this.updatePredictions(predictions, analysisData);
+            
+            // Force update svih timeframe redova u tabeli
+            this.forceUpdateAllTimeframeRows(predictions, analysisData);
+            
+        } catch (error) {
+            console.error('❌ Failed to refresh all timeframes:', error);
+        }
+    }
+    
+    // 🔧 NEW: Force update all timeframe rows
+    forceUpdateAllTimeframeRows(predictions, analysisData) {
+        const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
+        
+        console.log('🔧 FORCE updating all timeframe rows...');
+        
+        timeframes.forEach(tf => {
+            if (predictions[tf]) {
+                const prediction = predictions[tf];
+                
+                // Force update direction
+                const directionEl = document.getElementById(`tf-direction-${tf}`);
+                if (directionEl) {
+                    directionEl.textContent = this.translateDirection(prediction.direction);
+                    directionEl.className = `td direction-cell ${prediction.direction}`;
+                    console.log(`✅ FORCE updated direction ${tf}: ${prediction.direction}`);
+                } else {
+                    console.warn(`❌ Element tf-direction-${tf} not found!`);
+                }
+                
+                // Force update change
+                const changeEl = document.getElementById(`tf-change-${tf}`);
+                if (changeEl) {
+                    changeEl.textContent = `${prediction.changePercent.toFixed(2)}%`;
+                    changeEl.className = `td change-cell ${prediction.direction}`;
+                    console.log(`✅ FORCE updated change ${tf}: ${prediction.changePercent}%`);
+                }
+                
+                // Force update confidence
+                const confidenceEl = document.getElementById(`tf-confidence-${tf}`);
+                if (confidenceEl) {
+                    confidenceEl.textContent = `${prediction.confidence.toFixed(1)}%`;
+                    console.log(`✅ FORCE updated confidence ${tf}: ${prediction.confidence}%`);
+                }
+                
+                // Update indicators
+                const indicators = this.calculateTimeframeIndicators(tf, analysisData);
+                this.forceUpdateTimeframeIndicators(tf, indicators);
+            } else {
+                console.warn(`❌ No prediction found for timeframe: ${tf}`);
+            }
+        });
+    }
+    
+    // 🔧 NEW: Force update timeframe indicators
+    forceUpdateTimeframeIndicators(timeframe, indicators) {
+        console.log(`🔧 FORCE updating indicators for ${timeframe}:`, indicators);
+        
+        // Update individual indicator cells
+        const updates = [
+            { id: `tf-rsi-${timeframe}`, value: indicators.bullish > 0 ? '📈' : indicators.bearish > 0 ? '📉' : '➡️' },
+            { id: `tf-macd-${timeframe}`, value: indicators.bullish > 1 ? '📈' : indicators.bearish > 1 ? '📉' : '➡️' },
+            { id: `tf-bb-${timeframe}`, value: indicators.bullish > 2 ? '📈' : indicators.bearish > 2 ? '📉' : '➡️' },
+            { id: `tf-volume-${timeframe}`, value: indicators.bullish > 3 ? '🔥' : indicators.bearish > 3 ? '❄️' : '➡️' },
+            { id: `tf-ema-${timeframe}`, value: indicators.bullish > 4 ? '📈' : indicators.bearish > 4 ? '📉' : '➡️' },
+            { id: `tf-total-${timeframe}`, value: indicators.total }
+        ];
+        
+        updates.forEach(update => {
+            const element = document.getElementById(update.id);
+            if (element) {
+                element.textContent = update.value;
+                console.log(`✅ Updated ${update.id}: ${update.value}`);
+            } else {
+                console.warn(`❌ Element ${update.id} not found!`);
+            }
+        });
+    }
+    
+    // 🕐 NEW: Update next refresh time display
+    updateNextRefreshTime(timeframe, intervalMs) {
+        const nextTime = new Date(Date.now() + intervalMs);
+        const timeStr = `${nextTime.getHours()}:${String(nextTime.getMinutes()).padStart(2, '0')}`;
+        
+        const refreshEl = document.getElementById(`tf-refresh-${timeframe}`);
+        if (refreshEl) {
+            refreshEl.textContent = timeStr;
+        }
     }
 
     addPredictionRefreshControls() {
