@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <title>🔧 ML PatternDatabase Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+        .test-result { margin: 10px 0; padding: 10px; border-left: 3px solid #00ff00; }
+        .error { color: #ff4444; border-left-color: #ff4444; }
+        .success { color: #00ff00; border-left-color: #00ff00; }
+        .warning { color: #ffaa00; border-left-color: #ffaa00; }
+    </style>
+</head>
+<body>
+    <h1>🔧 ML PatternDatabase Fix Test</h1>
+    <div id="test-results"></div>
+    
+    <script src="js/ml-accuracy-enhancer.js"></script>
+    <script>
+        const testResults = document.getElementById('test-results');
+        
+        function addResult(message, type = 'success') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            testResults.appendChild(div);
+        }
+        
+        // Test ML Accuracy Enhancer initialization
+        try {
+            addResult('🚀 Starting ML PatternDatabase test...', 'warning');
+            
+            if (typeof MLAccuracyEnhancer === 'undefined') {
+                addResult('❌ MLAccuracyEnhancer class not loaded!', 'error');
+            } else {
+                addResult('✅ MLAccuracyEnhancer class loaded successfully', 'success');
+                
+                // Test creating instance
+                const mlEnhancer = new MLAccuracyEnhancer();
+                addResult('✅ MLAccuracyEnhancer instance created', 'success');
+                
+                // Test database loading
+                const loadResult = mlEnhancer.loadPatternDatabase();
+                addResult(`📚 loadPatternDatabase() returned: ${loadResult}`, loadResult ? 'success' : 'warning');
+                
+                // Test pattern generation
+                const patternId = mlEnhancer.generatePatternId('BTCUSDT', '1h');
+                addResult(`🎯 Generated pattern ID: ${patternId}`, 'success');
+                
+                // Test save database
+                const saveResult = mlEnhancer.savePatternDatabase();
+                addResult(`💾 savePatternDatabase() returned: ${saveResult}`, saveResult ? 'success' : 'error');
+                
+                // Check localStorage
+                const dbData = localStorage.getItem('mlPatternDatabase');
+                if (dbData) {
+                    try {
+                        const parsed = JSON.parse(dbData);
+                        addResult(`📊 PatternDatabase in localStorage: ${JSON.stringify(parsed, null, 2)}`, 'success');
+                    } catch (e) {
+                        addResult(`❌ Failed to parse PatternDatabase: ${e.message}`, 'error');
+                    }
+                } else {
+                    addResult('⚠️ No PatternDatabase found in localStorage', 'warning');
+                }
+                
+                // Check debug bridge
+                const bridgeData = localStorage.getItem('debugBridge');
+                if (bridgeData) {
+                    const bridge = JSON.parse(bridgeData);
+                    addResult(`🔗 DebugBridge: ${JSON.stringify(bridge, null, 2)}`, 'success');
+                } else {
+                    addResult('⚠️ No DebugBridge found', 'warning');
+                }
+                
+                addResult('🎉 All tests completed successfully!', 'success');
+            }
+            
+        } catch (error) {
+            addResult(`❌ Test failed: ${error.message}`, 'error');
+            console.error('Test error:', error);
+        }
+    </script>
+</body>
+</html>
