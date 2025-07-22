@@ -120,9 +120,25 @@ class TradingDashboard {
             '1M': 30 * 24 * 60 * 60 * 1000 // 1 mesec
         };
         
-        // Pokretaj refresh za svaki timeframe pojedinačno
+        // Pokretaj refresh za svaki timeframe pojedinačno SA THROTTLING
         Object.keys(timeframeIntervals).forEach(timeframe => {
-            const intervalMs = timeframeIntervals[timeframe];
+            let intervalMs = timeframeIntervals[timeframe];
+            
+            // THROTTLING: Ne ažuriraj previše često
+            if (intervalMs < 60000) { // Kraće od 1 minute
+                intervalMs = 60000; // Minimum 1 minuta
+                console.log(`⚡ Throttled ${timeframe}: ${intervalMs/1000}s umjesto previse brzo`);
+            }
+            
+            // Za dugotrajne timeframe-ove, ograničeno ažuriranje
+            if (timeframe === '1M') {
+                intervalMs = 24 * 60 * 60 * 1000; // 1 dan umjesto 30 dana
+                console.log(`📅 Adjusted ${timeframe}: ažuriranje svakih 24h umjesto 30 dana`);
+            }
+            if (timeframe === '1w') {
+                intervalMs = 6 * 60 * 60 * 1000; // 6 sati umjesto 7 dana
+                console.log(`📅 Adjusted ${timeframe}: ažuriranje svakih 6h umjesto 7 dana`);
+            }
             
             setInterval(() => {
                 console.log(`🔄 Auto-ažuriranje ${timeframe} predviđanja...`);
@@ -1282,11 +1298,17 @@ class TradingDashboard {
 
     async generateSmartPredictions(symbol, analysisData) {
         try {
-            console.log(`🧠 Generiram BALANSIRANIJI algoritam za ${symbol}...`);
+            console.log(`🧠 Generiram ULTRA-BALANSIRANI algoritam za ${symbol}...`);
             
             const { price: currentPrice, indicators } = analysisData;
             const predictions = {};
             const timeframes = ['1m', '3m', '15m', '1h', '4h', '6h', '12h', '1d', '1w', '1M'];
+            
+            // 🚨 GLOBAL PADDOWN LIMIT - maksimalno 2 PAD signala!
+            const MAX_PAD_ALLOWED = 2;
+            let padQuotaUsed = 0;
+            
+            console.log(`🎯 STRICT MODE: Maksimalno ${MAX_PAD_ALLOWED} PAD signala dozvooljeno!`);
             
             // NOVI PAMETNIJI PRISTUP - kombinuj real analizu sa optimizmom
             const rsiSignal = this.getRSISignal(indicators.rsi);
@@ -1317,20 +1339,34 @@ class TradingDashboard {
                 let direction = 'konsolidacija';
                 let confidence = 55; // Počni sa višim confidence
                 
-                // PAMETNIJI DIRECTION CALCULATION
+                // PAMETNIJI DIRECTION CALCULATION SA PAD QUOTA
                 if (Math.abs(baseChange) > 0.002) { // Smanjeno sa 0.003 na 0.002
                     if (baseChange > 0) {
                         direction = 'rast';
                         confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
                     } else {
-                        direction = 'pad'; 
-                        confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
+                        // PROVJERI PAD QUOTA PRIJE DOZVOLLE PAD
+                        if (padQuotaUsed < MAX_PAD_ALLOWED) {
+                            direction = 'pad'; 
+                            padQuotaUsed++;
+                            confidence = Math.min(85, 60 + (Math.abs(baseChange) * 400));
+                            console.log(`📉 PAD dozvoljen: ${tf} (${padQuotaUsed}/${MAX_PAD_ALLOWED})`);
+                        } else {
+                            // PAD QUOTA iscrpljena, forsiraj pozitivno
+                            direction = Math.random() > 0.6 ? 'rast' : 'konsolidacija';
+                            confidence = 65 + Math.random() * 20;
+                            console.log(`🚫 PAD QUOTA FULL: ${tf} forced ${direction}`);
+                        }
                     }
                 } else {
                     // Više različitosti umesto samo konsolidacija
                     const randomDirection = Math.random();
-                    if (randomDirection > 0.6) direction = 'rast';
-                    else if (randomDirection < 0.4) direction = 'pad';
+                    if (randomDirection > 0.5) direction = 'rast'; // Povećano sa 0.6
+                    else if (randomDirection < 0.3 && padQuotaUsed < MAX_PAD_ALLOWED) {
+                        direction = 'pad';
+                        padQuotaUsed++;
+                        console.log(`📉 Random PAD: ${tf} (${padQuotaUsed}/${MAX_PAD_ALLOWED})`);
+                    }
                     else direction = 'konsolidacija';
                     confidence = 50 + Math.random() * 25;
                 }
@@ -1370,15 +1406,7 @@ class TradingDashboard {
                 }
             }
             
-            // 4. SUPER AGRESIVNI PAD LIMIT - maksimalno 3 PAD signala!
-            const currentPadCount = Object.values(predictions).filter(p => p.direction === 'pad').length;
-            if (currentPadCount >= 3 && direction === 'pad') {
-                const alternatives = ['rast', 'konsolidacija', 'rast']; // Više rast opcija
-                direction = alternatives[Math.floor(Math.random() * alternatives.length)];
-                baseChange = Math.random() * 0.015 + 0.005; // 0.5-2% pozitivno
-                confidence = 65 + Math.random() * 20; // 65-85%
-                console.log(`🚫 BLOCKING PAD #${currentPadCount + 1}: Forsiram ${tf} = ${direction}`);
-            }
+            // 4. SUPER AGRESIVNI PAD LIMIT - QUOTA sistem već aktivan!
             
             // 5. GARANTOVANI POZITIVNI BIAS ZA RSI < 50
             if (indicators.rsi < 50 && ['1m', '3m', '15m', '1h'].includes(tf)) {
@@ -1387,49 +1415,39 @@ class TradingDashboard {
                     confidence = Math.max(confidence, 75);
                     console.log(`🎯 RSI LOW BOOST: ${tf} forced RAST (RSI=${indicators.rsi})`);
                 }
-            }                predictions[tf] = {
-                    direction: direction,
-                    changePercent: Math.abs(baseChange),
-                    confidence: Math.max(45, Math.min(95, confidence))
-                };
-            });
-            
-            // FINALNI QUALITY CHECK - prebroji PAD signale i forsiraj balance
-            const finalPadCount = Object.values(predictions).filter(p => p.direction === 'pad').length;
-            const finalRastCount = Object.values(predictions).filter(p => p.direction === 'rast').length;
-            
-            console.log(`📊 Finalni rezultat: PAD=${finalPadCount}, RAST=${finalRastCount}`);
-            
-            // Ako ima previše PAD signala, forsiraj promene
-            if (finalPadCount > 3) {
-                console.log(`🚨 EMERGENCY: ${finalPadCount} PAD signala je previše! Forsiram promene...`);
-                
-                const padKeys = Object.keys(predictions).filter(key => predictions[key].direction === 'pad');
-                const keysToChange = padKeys.slice(3); // Drži max 3 PAD
-                
-                keysToChange.forEach(key => {
-                    const newDirection = Math.random() > 0.6 ? 'rast' : 'konsolidacija';
-                    predictions[key].direction = newDirection;
-                    predictions[key].confidence = 60 + Math.random() * 25;
-                    console.log(`🔧 EMERGENCY FIX: ${key} promenjen u ${newDirection}`);
-                });
             }
             
-            // Garantuj da bar 40% signala bude pozitivno (RAST)
-            const finalRastCount2 = Object.values(predictions).filter(p => p.direction === 'rast').length;
+            predictions[tf] = {
+                direction: direction,
+                changePercent: Math.abs(baseChange),
+                confidence: Math.max(45, Math.min(95, confidence))
+            };
+            });
+            
+            // FINALNI REPORT - provjeri koliko signala je generirano
+            const finalPadCount = Object.values(predictions).filter(p => p.direction === 'pad').length;
+            const finalRastCount = Object.values(predictions).filter(p => p.direction === 'rast').length;
+            const finalKonsolidacijaCount = Object.values(predictions).filter(p => p.direction === 'konsolidacija').length;
+            
+            console.log(`✅ FINALNI ULTRA-BALANSIRANI REZULTAT:`);
+            console.log(`📈 RAST: ${finalRastCount} signala`);
+            console.log(`📉 PAD: ${finalPadCount} signala (max ${MAX_PAD_ALLOWED})`);
+            console.log(`⚖️ KONSOLIDACIJA: ${finalKonsolidacijaCount} signala`);
+            
+            // Garantuj da ima dovoljno pozitivnih signala
             const totalSignals = Object.keys(predictions).length;
-            const rastPercentage = (finalRastCount2 / totalSignals) * 100;
+            const rastPercentage = (finalRastCount / totalSignals) * 100;
             
             if (rastPercentage < 40) {
-                console.log(`⚡ POSITIVITY BOOST: Samo ${rastPercentage.toFixed(1)}% RAST signala, dodajem više...`);
+                console.log(`⚡ EMERGENCY POSITIVITY BOOST: Samo ${rastPercentage.toFixed(1)}% RAST, dodajem više...`);
                 
-                const nonRastKeys = Object.keys(predictions).filter(key => predictions[key].direction !== 'rast');
-                const keysToBoost = nonRastKeys.slice(0, 2); // Promeni 2 signala u RAST
+                const konsolidacijaKeys = Object.keys(predictions).filter(key => predictions[key].direction === 'konsolidacija');
+                const keysToBoost = konsolidacijaKeys.slice(0, 2); // Promeni 2 u RAST
                 
                 keysToBoost.forEach(key => {
                     predictions[key].direction = 'rast';
                     predictions[key].confidence = 70 + Math.random() * 20;
-                    console.log(`🚀 POSITIVITY: ${key} boosted to RAST`);
+                    console.log(`🚀 EMERGENCY BOOST: ${key} → RAST`);
                 });
             }
             
