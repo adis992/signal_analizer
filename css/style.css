@@ -156,6 +156,12 @@ body {
     transform: translateY(-2px);
 }
 
+/* Toggle Button Container */
+.toggle-button-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
 /* Main Dashboard Grid */
 .main-dashboard {
     margin-bottom: 40px;
@@ -887,10 +893,14 @@ body {
 }
 
 .trading-rules {
-    display: flex;
+    display: none; /* Override any inline styles */
     flex-direction: column;
     gap: 10px;
     margin-top: 15px;
+}
+
+.trading-rules.show {
+    display: flex;
 }
 
 .rule {

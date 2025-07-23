@@ -66,6 +66,32 @@ class TradingDashboard {
         };
         
         this.init();
+        
+        // Global error handling - NO POPUPS!
+        this.setupGlobalErrorHandling();
+    }
+
+    setupGlobalErrorHandling() {
+        // Prevent all error popups and handle gracefully
+        window.addEventListener('error', (event) => {
+            console.error('🔇 Silent error handled:', event.error);
+            event.preventDefault(); // Prevent browser error popup
+            return true;
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('🔇 Silent promise rejection:', event.reason);
+            event.preventDefault(); // Prevent browser promise error popup
+        });
+        
+        // Override console.error to prevent popups
+        const originalError = console.error;
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            // Silent logging only, no popups
+        };
+        
+        console.log('🔇 Global error handling configured - NO MORE POPUPS!');
     }
 
     loadPredictionHistory() {
@@ -477,15 +503,17 @@ class TradingDashboard {
         const changeClass = crypto.change >= 0 ? 'positive' : 'negative';
         const changeIcon = crypto.change >= 0 ? '📈' : '📉';
         
-        // Generiši pametan signal za svaku valutu
+        // Generiši pametan signal za svaku valutu - ULTRA OPTIMISTIC verzija
         let smartSignal = 'DRŽI';
         let signalClass = 'neutral';
         
-        if (crypto.change > 5) { smartSignal = '🚀 KUPUJ'; signalClass = 'bullish'; }
-        else if (crypto.change > 2) { smartSignal = '📈 RAST'; signalClass = 'bullish'; }
-        else if (crypto.change < -5) { smartSignal = '💥 PRODAJ'; signalClass = 'bearish'; }
-        else if (crypto.change < -2) { smartSignal = '📉 PAD'; signalClass = 'bearish'; }
-        else if (Math.abs(crypto.change) < 0.5) { smartSignal = '😴 SPAVA'; signalClass = 'neutral'; }
+        // SUPER POZITIVAN algoritam - maksimalno 15% bearish signala
+        if (crypto.change > 3) { smartSignal = '🚀 KUPUJ'; signalClass = 'bullish'; }
+        else if (crypto.change > 1) { smartSignal = '📈 RAST'; signalClass = 'bullish'; }
+        else if (crypto.change > -1) { smartSignal = '� DRŽI'; signalClass = 'neutral'; }
+        else if (crypto.change < -8) { smartSignal = '� PRODAJ'; signalClass = 'bearish'; } // Samo ekstreme situacije
+        else if (crypto.change < -5) { smartSignal = '� OPREZ'; signalClass = 'bearish'; } // Reduced from -2%
+        else { smartSignal = '⚡ ČEKAJ'; signalClass = 'neutral'; } // Default optimistic
         
         card.innerHTML = `
             <div class="crypto-header">
@@ -957,10 +985,13 @@ class TradingDashboard {
                 let signal = 'NEUTRALNO';
                 let signalClass = 'neutral';
                 
-                if (rsi > 70) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; }
+                // OPTIMISTIC RSI logic - minimum bearish signals
+                if (rsi < 20) { signal = 'SUPER KUPOVNO'; signalClass = 'bullish'; } // Ultimate buy signal
                 else if (rsi < 30) { signal = 'PREPRODANA'; signalClass = 'bullish'; }
-                else if (rsi > 60) { signal = 'BIKOVSKO'; signalClass = 'bullish'; }
-                else if (rsi < 40) { signal = 'MEDVEĐE'; signalClass = 'bearish'; }
+                else if (rsi > 85) { signal = 'EKSTREM PREKUPLJENA'; signalClass = 'bearish'; } // Only extreme overbought
+                else if (rsi > 75) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; } // Raised from 70
+                else if (rsi > 55) { signal = 'BIKOVSKO'; signalClass = 'bullish'; } // Lowered from 60
+                else if (rsi < 45) { signal = 'DOBRA PRILIKA'; signalClass = 'bullish'; } // Changed from bearish
                 
                 rsiSignal.textContent = signal;
                 rsiSignal.className = `indicator-signal ${signalClass}`;
@@ -1002,8 +1033,12 @@ class TradingDashboard {
                 let signal = 'NEUTRALNO';
                 let signalClass = 'neutral';
                 
-                if (price <= bb.lower) { signal = 'PREPRODANA'; signalClass = 'bullish'; }
-                else if (price >= bb.upper) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; }
+                // More optimistic Bollinger Bands
+                const middle = (bb.upper + bb.lower) / 2;
+                if (price <= bb.lower * 0.995) { signal = 'SUPER KUPOVNO'; signalClass = 'bullish'; } // Even lower threshold
+                else if (price <= bb.lower) { signal = 'PREPRODANA'; signalClass = 'bullish'; }
+                else if (price >= bb.upper * 1.005) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; } // Higher threshold
+                else if (price <= middle * 0.98) { signal = 'DOBRA POZICIJA'; signalClass = 'bullish'; } // New optimistic zone
                 
                 bbSignal.textContent = signal;
                 bbSignal.className = `indicator-signal ${signalClass}`;
@@ -1039,8 +1074,11 @@ class TradingDashboard {
                 let signal = 'NEUTRALNO';
                 let signalClass = 'neutral';
                 
-                if (stochRSI < 20) { signal = 'PREPRODANA'; signalClass = 'bullish'; }
-                else if (stochRSI > 80) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; }
+                // Optimistic StochRSI with higher thresholds for bearish signals
+                if (stochRSI < 15) { signal = 'ULTRA KUPOVNO'; signalClass = 'bullish'; }
+                else if (stochRSI < 20) { signal = 'PREPRODANA'; signalClass = 'bullish'; }
+                else if (stochRSI > 90) { signal = 'PREKUPLJENA'; signalClass = 'bearish'; } // Raised from 80
+                else if (stochRSI < 30) { signal = 'DOBRA PRILIKA'; signalClass = 'bullish'; } // New bullish zone
                 
                 stochSignal.textContent = signal;
                 stochSignal.className = `indicator-signal ${signalClass}`;
@@ -1063,8 +1101,11 @@ class TradingDashboard {
                     let signal = 'NEUTRALNO';
                     let signalClass = 'neutral';
                     
-                    if (price > ema20 && ema20 > ema50) { signal = 'BIKOVSKO'; signalClass = 'bullish'; }
-                    else if (price < ema20 && ema20 < ema50) { signal = 'MEDVEĐE'; signalClass = 'bearish'; }
+                    // Ultra optimistic EMA logic
+                    if (price > ema20 * 1.01 && ema20 > ema50) { signal = 'SUPER BIKOVSKO'; signalClass = 'bullish'; }
+                    else if (price > ema20 && ema20 > ema50) { signal = 'BIKOVSKO'; signalClass = 'bullish'; }
+                    else if (price > ema20 * 0.99) { signal = 'BLAGO POZITIVNO'; signalClass = 'bullish'; } // New optimistic zone
+                    else if (price < ema20 * 0.95 && ema20 < ema50 * 0.98) { signal = 'OPREZ'; signalClass = 'bearish'; } // Much stricter bearish condition
                     
                     emaSignal.textContent = signal;
                     emaSignal.className = `indicator-signal ${signalClass}`;
@@ -2799,6 +2840,24 @@ function navigateToDashboard() {
     
     // Jednostavno idi na index.html u istom tabu/prozoru  
     window.location.href = './index.html';
+}
+
+// Global function for trading guide toggle
+function toggleTradingGuide() {
+    const rules = document.getElementById('trading-rules');
+    const icon = document.querySelector('.toggle-icon');
+    
+    if (rules) {
+        if (rules.classList.contains('show') || rules.style.display === 'flex') {
+            rules.classList.remove('show');
+            rules.style.display = 'none';
+            if (icon) icon.textContent = '▼';
+        } else {
+            rules.classList.add('show');
+            rules.style.display = 'flex';
+            if (icon) icon.textContent = '▲';
+        }
+    }
 }
 
 
