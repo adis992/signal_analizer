@@ -599,6 +599,7 @@ class TradingDashboard {
             this.updateTechnicalIndicators(analysisData);
             this.calculateOverallAccuracy(analysisData);
             this.updatePredictions(predictions, analysisData);
+            this.generateAllTimeframePredictions(); // FORCE GENERISANJE SVIH TIMEFRAME-ova!
             this.updateMultiTimeframeDisplay(symbol); // NOVA funkcija!
             await this.loadChart(symbol);
             
@@ -2942,6 +2943,22 @@ class TradingDashboard {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM učitan, pokrećem Trading Dashboard (GitHub Pages verzija)...');
     window.tradingDashboard = new TradingDashboard();
+    
+    // FORCE GENERATION TIMEFRAME TABELE ODMAH!
+    setTimeout(() => {
+        if (window.tradingDashboard && window.tradingDashboard.generateAllTimeframePredictions) {
+            console.log('🔥 FORCE generisanje svih timeframe predviđanja...');
+            window.tradingDashboard.generateAllTimeframePredictions();
+        }
+    }, 2000); // Čekaj 2 sekunde da se sve učita
+    
+    // AUTO-REFRESH TIMEFRAME TABELE svakih 30 sekundi
+    setInterval(() => {
+        if (window.tradingDashboard && window.tradingDashboard.generateAllTimeframePredictions) {
+            console.log('🔄 Auto-refresh timeframe tabele...');
+            window.tradingDashboard.generateAllTimeframePredictions();
+        }
+    }, 30000); // Svakih 30 sekundi
 });
 
 // Cleanup when page unloads
