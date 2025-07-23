@@ -199,21 +199,23 @@
             `;
         }
         
-        // INSTANT LOAD!
-        console.log('🚀 DOM LOADED - STARTING IMMEDIATE...');
-        
-        // NE ČEKAJ NIŠTA - ODMAH!
-        populateDropdown();
-        generateCryptoGrid();
-        updateStatus();
-        
-        console.log('✅ TEST PAGE SUCCESSFULLY LOADED!');
-        
-        // 🔥 FORCE REFRESH dropdown posle 1 sekunda da SIGURNO radi!
-        setTimeout(() => {
-            console.log('🔥 FORCE RE-POPULATING dropdown...');
+        // ČEKA DA SE SVE UČITA PRVO!
+        window.onload = function() {
+            console.log('🚀 WINDOW LOADED - STARTING...');
+            
+            // SADA pokreći funkcije
             populateDropdown();
-        }, 1000);
+            generateCryptoGrid();
+            updateStatus();
+            
+            console.log('✅ TEST PAGE SUCCESSFULLY LOADED!');
+            
+            // 🔥 FORCE REFRESH dropdown posle 2 sekunde da SIGURNO radi!
+            setTimeout(() => {
+                console.log('🔥 FORCE RE-POPULATING dropdown...');
+                populateDropdown();
+            }, 2000);
+        };
     </script>
 </body>
 </html>
