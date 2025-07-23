@@ -88,6 +88,38 @@
             <option value="">Učitavam valute...</option>
         </select>
         
+        <!-- FORCE LOADING SCRIPT -->
+        <script>
+            // INSTANT MANUAL LOAD - BEZ ČEKANJA!
+            console.log('🚀 FORCE LOADING SCRIPT ACTIVATED!');
+            
+            const instantCryptoData = [
+                { symbol: 'BTCUSDT', price: 45234.56, change: 3.45, icon: '₿' },
+                { symbol: 'ETHUSDT', price: 2834.12, change: -1.23, icon: 'Ξ' },
+                { symbol: 'DOGEUSDT', price: 0.0756, change: 8.91, icon: '🐕' }
+            ];
+            
+            function forceLoadDropdown() {
+                const dropdown = document.getElementById('crypto-dropdown');
+                if (dropdown) {
+                    dropdown.innerHTML = '<option value="">USPEŠNO UČITANO - 3 valute!</option>';
+                    instantCryptoData.forEach(crypto => {
+                        const option = document.createElement('option');
+                        const symbolName = crypto.symbol.replace('USDT', '');
+                        option.value = crypto.symbol;
+                        option.textContent = `${crypto.icon} ${symbolName} - $${crypto.price.toFixed(4)}`;
+                        dropdown.appendChild(option);
+                    });
+                    console.log('✅ FORCE dropdown loaded!');
+                } else {
+                    console.error('❌ Dropdown ne postoji!');
+                }
+            }
+            
+            // POKRETAJ ODMAH!
+            forceLoadDropdown();
+        </script>
+        
         <div id="crypto-grid" class="crypto-grid">
             <!-- Cards će biti dodati ovde -->
         </div>
@@ -200,17 +232,14 @@
         }
         
         // INSTANT LOAD!
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM LOADED - STARTING...');
-            
-            setTimeout(() => {
-                populateDropdown();
-                generateCryptoGrid();
-                updateStatus();
-                
-                console.log('✅ TEST PAGE SUCCESSFULLY LOADED!');
-            }, 500);
-        });
+        console.log('🚀 DOM LOADED - STARTING IMMEDIATE...');
+        
+        // NE ČEKAJ NIŠTA - ODMAH!
+        populateDropdown();
+        generateCryptoGrid();
+        updateStatus();
+        
+        console.log('✅ TEST PAGE SUCCESSFULLY LOADED!');
     </script>
 </body>
 </html>
