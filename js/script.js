@@ -67,9 +67,6 @@ class TradingDashboard {
         
         this.init();
         
-        // 🚀 FORCE INSTANT LOAD - sve što treba odmah!
-        setTimeout(() => this.forceInstantLoad(), 100);
-        
         // Global error handling - NO POPUPS!
         this.setupGlobalErrorHandling();
     }
@@ -384,6 +381,9 @@ class TradingDashboard {
             this.populateDropdown(cryptoData);
             this.generateCryptoGrid(cryptoData);
             await this.loadCryptoDetails(this.selectedCrypto);
+            
+            // 🚀 FORCE INSTANT LOAD POSLE učitavanja valuta!
+            setTimeout(() => this.forceInstantLoad(), 1000);
             
         } catch (error) {
             console.error('❌ Greška pri učitavanju podataka:', error);
