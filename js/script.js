@@ -387,16 +387,55 @@ class TradingDashboard {
             
         } catch (error) {
             console.error('❌ Greška pri učitavanju podataka:', error);
+            
+            // 🚀 FALLBACK DATA kada Binance API ne radi!
+            console.log('🔧 Koristim FALLBACK crypto data...');
+            const fallbackData = this.generateFallbackCryptoData();
+            
+            this.populateDropdown(fallbackData);
+            this.generateCryptoGrid(fallbackData);
+            await this.loadCryptoDetails(this.selectedCrypto);
+            
+            // 🚀 FORCE INSTANT LOAD POSLE fallback učitavanja!
+            setTimeout(() => this.forceInstantLoad(), 1000);
+            
             // NE PRIKAŽI error popup - samo logiraj
-            console.warn('⚠️ Binance API greška, koristit će se fallback podaci');
-            // this.showError('Greška pri povezivanju sa Binance API. Molimo pokušajte ponovo.');
+            console.warn('⚠️ Binance API greška, koristim fallback podaci');
         }
+    }
+
+    // 🚀 FALLBACK CRYPTO DATA kada Binance API ne radi
+    generateFallbackCryptoData() {
+        console.log('🔧 Generating FALLBACK crypto data...');
+        
+        const cryptoPrices = {
+            'BTCUSDT': 45000, 'ETHUSDT': 2800, 'BNBUSDT': 320, 'SOLUSDT': 95,
+            'XRPUSDT': 0.65, 'ADAUSDT': 0.45, 'DOTUSDT': 6.2, 'LINKUSDT': 14.5,
+            'LTCUSDT': 85, 'BCHUSDT': 240, 'XLMUSDT': 0.12, 'UNIUSDT': 6.8,
+            'VETUSDT': 0.025, 'TRXUSDT': 0.08, 'FILUSDT': 5.2, 'AAVEUSDT': 95,
+            'MATICUSDT': 0.85, 'ATOMUSDT': 8.5, 'NEARUSDT': 2.1, 'AVAXUSDT': 28,
+            'FTMUSDT': 0.42, 'ALGOUSDT': 0.18, 'ICPUSDT': 4.8, 'SANDUSDT': 0.35,
+            'MANAUSDT': 0.45, 'AXSUSDT': 6.2, 'THETAUSDT': 1.1, 'MKRUSDT': 1250,
+            'COMPUSDT': 48, 'SUSHIUSDT': 1.2, 'YFIUSDT': 6500, 'CRVUSDT': 0.52,
+            'SNXUSDT': 2.8, '1INCHUSDT': 0.38, 'ENJUSDT': 0.28, 'DOGEUSDT': 0.075
+        };
+        
+        return this.cryptoSymbols.map(symbol => {
+            const basePrice = cryptoPrices[symbol] || 1.0;
+            const randomChange = (Math.random() - 0.5) * 10; // ±5%
+            const price = basePrice * (1 + randomChange / 100);
+            
+            return {
+                symbol: symbol,
+                price: price,
+                change: randomChange,
+                volume: Math.random() * 1000000000 + 100000000 // Random volume
+            };
+        });
     }
 
     async fetchAllCryptoData() {
         try {
-            console.log('🚀 Pokušavam Binance API...');
-            
             // Koristi Binance 24hr ticker statistike
             const response = await fetch(`${this.binanceApiUrl}/ticker/24hr`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -424,79 +463,8 @@ class TradingDashboard {
             return filteredData;
         } catch (error) {
             console.error('❌ GREŠKA: Binance API nedostupan:', error);
-            console.log('🔧 Koristim FALLBACK crypto podatke...');
-            
-            // FALLBACK - generiši realistic crypto podatke
-            return this.generateFallbackCryptoData();
+            throw new Error('Binance API nedostupan. Molimo pokušajte ponovo.');
         }
-    }
-    
-    // 🚀 NOVA FUNKCIJA: Fallback crypto data kad API ne radi
-    generateFallbackCryptoData() {
-        console.log('🔧 Generišem fallback crypto podatke...');
-        
-        const fallbackPrices = {
-            'BTCUSDT': 97650.45,
-            'ETHUSDT': 3420.67,
-            'BNBUSDT': 692.33,
-            'SOLUSDT': 198.45,
-            'XRPUSDT': 2.15,
-            'ADAUSDT': 0.89,
-            'DOTUSDT': 7.12,
-            'LINKUSDT': 11.89,
-            'LTCUSDT': 102.45,
-            'BCHUSDT': 456.78,
-            'XLMUSDT': 0.11,
-            'UNIUSDT': 8.45,
-            'VETUSDT': 0.045,
-            'TRXUSDT': 0.19,
-            'FILUSDT': 5.67,
-            'AAVEUSDT': 98.45,
-            'MATICUSDT': 0.42,
-            'ATOMUSDT': 8.91,
-            'NEARUSDT': 5.23,
-            'AVAXUSDT': 42.67,
-            'FTMUSDT': 0.78,
-            'ALGOUSDT': 0.23,
-            'ICPUSDT': 11.45,
-            'SANDUSDT': 0.51,
-            'MANAUSDT': 0.42,
-            'AXSUSDT': 6.78,
-            'THETAUSDT': 1.89,
-            'MKRUSDT': 1567.89,
-            'COMPUSDT': 67.45,
-            'SUSHIUSDT': 1.23,
-            'YFIUSDT': 8967.45,
-            'CRVUSDT': 0.78,
-            'SNXUSDT': 2.45,
-            '1INCHUSDT': 0.41,
-            'ENJUSDT': 0.19,
-            'DOGEUSDT': 0.32 // TARIK's favorite! 🐕
-        };
-        
-        const cryptoData = this.cryptoSymbols.map(symbol => {
-            const basePrice = fallbackPrices[symbol] || Math.random() * 100;
-            const change = (Math.random() - 0.4) * 15; // Bias toward positive
-            const volume = Math.random() * 1000000000 + 50000000;
-            
-            return {
-                symbol: symbol,
-                price: basePrice,
-                change: change,
-                volume: volume
-            };
-        });
-        
-        // Cache fallback data
-        this.cryptoData = {};
-        cryptoData.forEach(crypto => {
-            this.cryptoData[crypto.symbol] = crypto;
-        });
-        
-        console.log(`✅ Fallback data generated za ${cryptoData.length} crypto valuta!`);
-        console.log('📊 Sample: BTC:', this.cryptoData['BTCUSDT'], 'DOGE:', this.cryptoData['DOGEUSDT']);
-        
-        return cryptoData;
     }
 
 
