@@ -1762,6 +1762,23 @@ body {
     text-align: center;
 }
 
+/* Multi-Timeframe Section */
+.multi-timeframe-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.multi-timeframe-section h2 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
 .timeframe-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
