@@ -4,8 +4,256 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚀 CRYPTO SIGNAL TRACKER - RADI GARANTOVANO!</title>
-    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 255, 136, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid #00ff88;
+        }
+        
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .precision-meter {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .currency-selector {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .currency-dropdown {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            background: #1a1a2e;
+            color: white;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .selected-crypto-info {
+            text-align: center;
+        }
+        
+        .crypto-summary {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .selected-name, .selected-price, .selected-change {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .positive { color: #00ff88; }
+        .negative { color: #ff4757; }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .section h2 {
+            margin-bottom: 20px;
+            color: #00ff88;
+            font-size: 1.5rem;
+        }
+        
+        .crypto-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .crypto-card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .crypto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .crypto-card.selected {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+        
+        .crypto-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .crypto-icon {
+            font-size: 2rem;
+        }
+        
+        .crypto-info {
+            flex: 1;
+        }
+        
+        .crypto-symbol {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .crypto-price {
+            font-size: 1.2rem;
+            color: #00ff88;
+            display: block;
+        }
+        
+        .crypto-change {
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+        
+        .crypto-volume {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin: 5px 0;
+        }
+        
+        .crypto-signals {
+            margin-top: 15px;
+        }
+        
+        .signal-indicator {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .bullish { background: #00ff88; color: black; }
+        .bearish { background: #ff4757; color: white; }
+        .neutral { background: #ffa502; color: black; }
+        
+        .indicators-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .indicator {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .indicator-name {
+            display: block;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .indicator-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+        
+        .indicator-signal {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
