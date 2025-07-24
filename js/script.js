@@ -512,15 +512,25 @@ class TradingDashboard {
 
 
     populateDropdown(cryptos) {
+        console.log('🚀 FORCE POPULATE DROPDOWN STARTING...');
         const dropdown = document.getElementById('currency-select');
         if (!dropdown) {
             console.error('❌ Dropdown element ne postoji!');
+            // 🔥 FORCE CREATE DROPDOWN AKO NE POSTOJI!
+            setTimeout(() => {
+                console.log('🔄 Retry populate dropdown...');
+                this.populateDropdown(cryptos);
+            }, 1000);
             return;
         }
 
-        dropdown.innerHTML = '<option value="">Odaberite valutu...</option>';
+        // 🔥 FORCE CLEAR AND POPULATE!
+        dropdown.innerHTML = '';
+        dropdown.innerHTML = '<option value="">Odaberite crypto valutu...</option>';
         
-        cryptos.forEach(crypto => {
+        console.log('💰 Adding', cryptos.length, 'cryptos to dropdown...');
+        
+        cryptos.forEach((crypto, index) => {
             const option = document.createElement('option');
             const symbolName = crypto.symbol.replace('USDT', '');
             const cryptoIcon = this.cryptoIcons[symbolName] || '💰';
@@ -540,7 +550,14 @@ class TradingDashboard {
             }
             
             dropdown.appendChild(option);
+            console.log(`✅ Added ${symbolName} to dropdown (${index + 1}/${cryptos.length})`);
         });
+        
+        // � FORCE FINAL VERIFICATION!
+        console.log('✅ DROPDOWN POPULATED WITH', dropdown.children.length - 1, 'CRYPTOS!');
+        
+        // 🔥 FORCE TRIGGER CHANGE EVENT!
+        dropdown.dispatchEvent(new Event('change'));
         
         // Postavi odabranu valutu ako je učitana iz localStorage
         if (this.selectedCrypto && this.selectedCrypto !== 'BTCUSDT') {
