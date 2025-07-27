@@ -5,63 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚀 CRYPTO SIGNAL TRACKER - 100% Tačnost</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/chat-v2.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- HARDCODED CRYPTO DATA SCRIPT - GARANTOVANO RADI! -->
-    <script>
-        // FORCE LOAD CRYPTO DATA ODMAH!
-        window.cryptoDatabase = [
-            { symbol: 'BTCUSDT', price: 45234.56, change: 3.45, icon: '₿', volume: 2500000000 },
-            { symbol: 'ETHUSDT', price: 2834.12, change: -1.23, icon: 'Ξ', volume: 1800000000 },
-            { symbol: 'BNBUSDT', price: 318.45, change: 2.11, icon: '🔸', volume: 950000000 },
-            { symbol: 'SOLUSDT', price: 94.67, change: 5.67, icon: '◉', volume: 1200000000 },
-            { symbol: 'XRPUSDT', price: 0.6543, change: -2.34, icon: '◈', volume: 3200000000 },
-            { symbol: 'ADAUSDT', price: 0.4521, change: 1.89, icon: '◊', volume: 850000000 },
-            { symbol: 'DOTUSDT', price: 6.234, change: 0.45, icon: '●', volume: 420000000 },
-            { symbol: 'LINKUSDT', price: 14.56, change: 3.21, icon: '🔗', volume: 380000000 },
-            { symbol: 'LTCUSDT', price: 84.32, change: -0.87, icon: 'Ł', volume: 320000000 },
-            { symbol: 'DOGEUSDT', price: 0.0756, change: 8.91, icon: '🐕', volume: 1950000000 }
-        ];
-        
-        // FORCE POPULATE DROPDOWN FUNCTION
-        function forcePopulateDropdown() {
-            console.log('🚀 FORCE POPULATING DROPDOWN...');
-            const dropdown = document.getElementById('currency-select');
-            
-            if (!dropdown) {
-                console.error('❌ Dropdown ne postoji!');
-                return;
-            }
-            
-            dropdown.innerHTML = '<option value="">Odaberite crypto valutu...</option>';
-            
-            window.cryptoDatabase.forEach(crypto => {
-                const option = document.createElement('option');
-                const symbolName = crypto.symbol.replace('USDT', '');
-                
-                option.value = crypto.symbol;
-                option.textContent = `${crypto.icon} ${symbolName} - $${crypto.price.toFixed(4)} (${crypto.change >= 0 ? '+' : ''}${crypto.change.toFixed(2)}%)`;
-                
-                dropdown.appendChild(option);
-            });
-            
-            console.log('✅ FORCE dropdown populated with', window.cryptoDatabase.length, 'cryptos');
-        }
-        
-        // FORCE LOAD ODMAH KADA SE UČITA SCRIPT!
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 DOM LOADED - FORCE LOADING DROPDOWN...');
-            
-            setTimeout(() => {
-                forcePopulateDropdown();
-                
-                // FORCE REFRESH svake 2 sekunde
-                setInterval(forcePopulateDropdown, 2000);
-            }, 500);
-        });
-    </script>
-    
     <meta name="description" content="Profesionalni crypto trading signali sa 100% tačnošću. Praćenje BTC, ETH, SOL i drugih kriptovaluta u realnom vremenu.">
     <meta name="keywords" content="crypto, bitcoin, ethereum, solana, trading, signali, analiza">
 </head>
@@ -71,314 +15,35 @@
         <div class="header">
             <h1>🚀 CRYPTO SIGNAL TRACKER</h1>
             <p>💎 PROFESSIONAL SIGNAL TRACKER - Premium Analiza</p>
-            
-            <!-- Navigation Menu -->
-            <div class="navigation-menu">
-                <a href="index.html" class="nav-link active">
-                    📊 DASHBOARD
-                </a>
-                <a href="debug.html" class="nav-link">
-                    🔧 DEBUG PANEL
-                </a>
-            </div>
-            
             <div class="status-bar">
                 <div class="live-indicator">
-                    <div class="pulse"></div>
-                    UŽIVO - Binance API
+                    <span class="pulse"></span>
+                    <span>LIVE</span>
                 </div>
                 <div class="precision-meter">
-                    <span class="precision-value" id="last-update-time">--:--:--</span>
+                    <span>Tačnost: 100%</span>
                 </div>
             </div>
         </div>
 
         <!-- Currency Selector -->
         <div class="currency-selector">
-            <select id="currency-select" class="currency-dropdown" title="Odaberi crypto valutu za analizu">
+            <select id="currency-select" class="currency-dropdown">
                 <option value="">⏳ Učitavam valute...</option>
             </select>
             
             <div class="selected-crypto-info">
                 <div class="crypto-summary">
                     <span class="selected-name">Odaberite valutu</span>
-                    <span class="selected-price">$--</span>
-                    <span class="selected-change">--%</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Trading Guide - Minimized -->
-        <div class="trading-guide minimized">
-            <div class="guide-header" onclick="toggleTradingGuide()">
-                <h3>📖 KAKO TRGOVATI SIGURNO</h3>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="trading-rules" id="trading-rules">
-                <div class="rule green">
-                    <span class="rule-icon">🟢</span>
-                    <span class="rule-text"><strong>KUPUJ KADA:</strong> RSI &lt; 30 + Ukupna tačnost &gt; 70% + 📈 RAST predviđanje</span>
-                </div>
-                <div class="rule red">
-                    <span class="rule-icon">🔴</span>
-                    <span class="rule-text"><strong>PRODAJ KADA:</strong> RSI &gt; 70 + Ukupna tačnost &gt; 70% + 📉 PAD predviđanje</span>
-                </div>
-                <div class="rule yellow">
-                    <span class="rule-icon">⚠️</span>
-                    <span class="rule-text"><strong>ČEKAJ KADA:</strong> Kontradiktorna predviđanja ili tačnost &lt; 60%</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Predictions Panel - MOVED TO TOP FOR PRIORITY -->
-        <div class="predictions-panel">
-            <div class="predictions-header">
-                <h2>🔮 PREDVIĐANJA I SIGNALI</h2>
-                <div class="prediction-refresh-controls">
-                    <label for="prediction-refresh-rate">🔄 Auto-refresh:</label>
-                    <select id="prediction-refresh-rate" class="refresh-rate-select">
-                        <option value="15min">Svakih 15min</option>
-                        <option value="30min">Svakih 30min</option>
-                        <option value="1h" selected>Svaki sat</option>
-                        <option value="1d">Jednom dnevno</option>
-                    </select>
-                </div>
-            </div>
-            
-            <!-- Glavni Ukupni Prediction -->
-            <div class="main-prediction">
-                <h3>🎯 GLAVNI UKUPNI SIGNAL</h3>
-                <div class="main-signal" id="main-signal">
-                    <div class="signal-icon">⏳</div>
-                    <div class="signal-text">Analiziram...</div>
-                    <div class="signal-confidence">--% pouzdanost</div>
-                    <div class="signal-description">Učitavam ukupnu analizu svih timeframe-ova...</div>
-                </div>
-            </div>
-
-            <!-- INDIVIDUAL TIMEFRAME ANALYSIS TABLE -->
-            <div class="timeframe-analysis-container">
-                <h3>📊 ANALIZA PO TIMEFRAME-OVIMA</h3>
-                <div class="timeframe-table">
-                    <div class="table-header">
-                        <div class="th">Timeframe</div>
-                        <div class="th">Smer</div>
-                        <div class="th">Promena</div>
-                        <div class="th">Pouzdanost</div>
-                        <div class="th">RSI</div>
-                        <div class="th">MACD</div>
-                        <div class="th">BB</div>
-                        <div class="th">Volume</div>
-                        <div class="th">EMA</div>
-                        <div class="th">Ukupno</div>
-                        <div class="th">Sledeće</div>
-                    </div>
-                    
-                    <!-- Individual rows for each timeframe -->
-                    <div class="table-row" id="tf-row-1m">
-                        <div class="td timeframe-name">1m</div>
-                        <div class="td direction-cell" id="tf-direction-1m">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-1m">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-1m">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-1m">--</div>
-                        <div class="td indicator-cell" id="tf-macd-1m">--</div>
-                        <div class="td indicator-cell" id="tf-bb-1m">--</div>
-                        <div class="td indicator-cell" id="tf-volume-1m">--</div>
-                        <div class="td indicator-cell" id="tf-ema-1m">--</div>
-                        <div class="td total-cell" id="tf-total-1m">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-1m">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-3m">
-                        <div class="td timeframe-name">3m</div>
-                        <div class="td direction-cell" id="tf-direction-3m">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-3m">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-3m">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-3m">--</div>
-                        <div class="td indicator-cell" id="tf-macd-3m">--</div>
-                        <div class="td indicator-cell" id="tf-bb-3m">--</div>
-                        <div class="td indicator-cell" id="tf-volume-3m">--</div>
-                        <div class="td indicator-cell" id="tf-ema-3m">--</div>
-                        <div class="td total-cell" id="tf-total-3m">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-3m">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-15m">
-                        <div class="td timeframe-name">15m</div>
-                        <div class="td direction-cell" id="tf-direction-15m">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-15m">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-15m">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-15m">--</div>
-                        <div class="td indicator-cell" id="tf-macd-15m">--</div>
-                        <div class="td indicator-cell" id="tf-bb-15m">--</div>
-                        <div class="td indicator-cell" id="tf-volume-15m">--</div>
-                        <div class="td indicator-cell" id="tf-ema-15m">--</div>
-                        <div class="td total-cell" id="tf-total-15m">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-15m">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-1h">
-                        <div class="td timeframe-name">1h</div>
-                        <div class="td direction-cell" id="tf-direction-1h">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-1h">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-1h">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-1h">--</div>
-                        <div class="td indicator-cell" id="tf-macd-1h">--</div>
-                        <div class="td indicator-cell" id="tf-bb-1h">--</div>
-                        <div class="td indicator-cell" id="tf-volume-1h">--</div>
-                        <div class="td indicator-cell" id="tf-ema-1h">--</div>
-                        <div class="td total-cell" id="tf-total-1h">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-1h">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-4h">
-                        <div class="td timeframe-name">4h</div>
-                        <div class="td direction-cell" id="tf-direction-4h">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-4h">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-4h">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-4h">--</div>
-                        <div class="td indicator-cell" id="tf-macd-4h">--</div>
-                        <div class="td indicator-cell" id="tf-bb-4h">--</div>
-                        <div class="td indicator-cell" id="tf-volume-4h">--</div>
-                        <div class="td indicator-cell" id="tf-ema-4h">--</div>
-                        <div class="td total-cell" id="tf-total-4h">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-4h">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-1d">
-                        <div class="td timeframe-name">1d</div>
-                        <div class="td direction-cell" id="tf-direction-1d">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-1d">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-1d">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-1d">--</div>
-                        <div class="td indicator-cell" id="tf-macd-1d">--</div>
-                        <div class="td indicator-cell" id="tf-bb-1d">--</div>
-                        <div class="td indicator-cell" id="tf-volume-1d">--</div>
-                        <div class="td indicator-cell" id="tf-ema-1d">--</div>
-                        <div class="td total-cell" id="tf-total-1d">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-1d">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-1w">
-                        <div class="td timeframe-name">1w</div>
-                        <div class="td direction-cell" id="tf-direction-1w">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-1w">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-1w">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-1w">--</div>
-                        <div class="td indicator-cell" id="tf-macd-1w">--</div>
-                        <div class="td indicator-cell" id="tf-bb-1w">--</div>
-                        <div class="td indicator-cell" id="tf-volume-1w">--</div>
-                        <div class="td indicator-cell" id="tf-ema-1w">--</div>
-                        <div class="td total-cell" id="tf-total-1w">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-1w">--</div>
-                    </div>
-                    
-                    <div class="table-row" id="tf-row-1M">
-                        <div class="td timeframe-name">1M</div>
-                        <div class="td direction-cell" id="tf-direction-1M">UČITAVA...</div>
-                        <div class="td change-cell" id="tf-change-1M">--</div>
-                        <div class="td confidence-cell" id="tf-confidence-1M">--</div>
-                        <div class="td indicator-cell" id="tf-rsi-1M">--</div>
-                        <div class="td indicator-cell" id="tf-macd-1M">--</div>
-                        <div class="td indicator-cell" id="tf-bb-1M">--</div>
-                        <div class="td indicator-cell" id="tf-volume-1M">--</div>
-                        <div class="td indicator-cell" id="tf-ema-1M">--</div>
-                        <div class="td total-cell" id="tf-total-1M">--/5</div>
-                        <div class="td refresh-cell" id="tf-refresh-1M">--</div>
-                    </div>
-                    
-                    <!-- SUMMARY ROW -->
-                    <div class="table-row summary-row" id="tf-summary-row">
-                        <div class="td summary-label"><strong>📊 UKUPNO</strong></div>
-                        <div class="td summary-direction" id="summary-direction">--</div>
-                        <div class="td summary-change" id="summary-change">--</div>
-                        <div class="td summary-confidence" id="summary-confidence">--</div>
-                        <div class="td summary-indicator" id="summary-rsi">--</div>
-                        <div class="td summary-indicator" id="summary-macd">--</div>
-                        <div class="td summary-indicator" id="summary-bb">--</div>
-                        <div class="td summary-indicator" id="summary-volume">--</div>
-                        <div class="td summary-indicator" id="summary-ema">--</div>
-                        <div class="td summary-total" id="summary-total">--/45</div>
-                        <div class="td summary-status" id="summary-status">--</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Overall Accuracy -->
-            <div class="overall-accuracy">
-                <h3>🎯 UKUPNA TAČNOST SIGNALA</h3>
-                <div class="accuracy-display">
-                    <div class="accuracy-circle">
-                        <div class="accuracy-bar">
-                            <div class="accuracy-fill" id="accuracy-fill"></div>
-                        </div>
-                        <div class="accuracy-text">
-                            <span id="accuracy-percentage">--</span>% Tačnost
-                        </div>
-                    </div>
-                    <div class="signal-consensus" id="signal-consensus">UČITAVA...</div>
-                </div>
-            </div>
-
-            <!-- Predictions Grid -->
-            <div class="predictions-grid">
-                <!-- All prediction cards here -->
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">1 Minut</div>
-                    <div class="prediction-value" id="pred-1m">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-1m">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">3 Minuta</div>
-                    <div class="prediction-value" id="pred-3m">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-3m">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">15 Minuta</div>
-                    <div class="prediction-value" id="pred-15m">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-15m">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">1 Sat</div>
-                    <div class="prediction-value" id="pred-1h">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-1h">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">4 Sata</div>
-                    <div class="prediction-value" id="pred-4h">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-4h">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">6 Sati</div>
-                    <div class="prediction-value" id="pred-6h">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-6h">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">12 Sati</div>
-                    <div class="prediction-value" id="pred-12h">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-12h">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">1 Dan</div>
-                    <div class="prediction-value" id="pred-1d">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-1d">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">1 Sedmica</div>
-                    <div class="prediction-value" id="pred-1w">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-1w">-- tačnost</div>
-                </div>
-                <div class="prediction-card">
-                    <div class="prediction-timeframe">1 Mjesec</div>
-                    <div class="prediction-value" id="pred-1M">📊 UČITAVA...</div>
-                    <div class="prediction-confidence" id="conf-1M">-- tačnost</div>
+                    <span class="selected-price">--</span>
+                    <span class="selected-change">--</span>
                 </div>
             </div>
         </div>
 
         <!-- Toggle Button -->
-        <div class="toggle-button-container">
-            <button id="toggle-grid" class="tf-btn">👁️ PRIKAŽI SVE VALUTE</button>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button id="toggle-grid" class="tf-btn">👁️ SAKRIJ SVE VALUTE</button>
         </div>
 
         <!-- Crypto Grid -->
@@ -400,81 +65,28 @@
 
             <!-- Technical Analysis Grid -->
             <div class="analysis-grid">
-                <!-- RSI Card -->
-                <div class="indicator-card rsi-card">
-                    <div class="indicator-header">
-                        <h3>📊 RSI (Relative Strength Index)</h3>
-                        <div class="indicator-value" id="rsi-value">--</div>
-                    </div>
-                    <div class="indicator-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill rsi-fill" id="rsi-fill"></div>
-                        </div>
-                    </div>
-                    <div class="indicator-signal" id="rsi-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Meri prekkupljenost/preprodanost. Ispod 30 = kupuj, iznad 70 = prodaj
-                    </div>
+                <div class="analysis-card">
+                    <h3>📊 RSI</h3>
+                    <div class="indicator-value" id="rsi-value">--</div>
+                    <div class="indicator-signal" id="rsi-signal">--</div>
                 </div>
-
-                <!-- MACD Card -->
-                <div class="indicator-card macd-card">
-                    <div class="indicator-header">
-                        <h3>🌊 MACD (Convergence Divergence)</h3>
-                        <div class="indicator-value" id="macd-value">--</div>
-                    </div>
-                    <div class="indicator-signal" id="macd-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Prati momentum i crossover signale. Pozitivan = bullish trend
-                    </div>
+                
+                <div class="analysis-card">
+                    <h3>📈 MACD</h3>
+                    <div class="indicator-value" id="macd-value">--</div>
+                    <div class="indicator-signal" id="macd-signal">--</div>
                 </div>
-
-                <!-- Bollinger Bands Card -->
-                <div class="indicator-card bb-card">
-                    <div class="indicator-header">
-                        <h3>📈 Bollinger Bands</h3>
-                        <div class="indicator-value" id="bb-value">--</div>
-                    </div>
-                    <div class="indicator-signal" id="bb-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Volatilnost bands. Cijena na donjem bandu = kupuj, na gornjem = prodaj
-                    </div>
+                
+                <div class="analysis-card">
+                    <h3>🔢 Volume</h3>
+                    <div class="indicator-value" id="volume-value">--</div>
+                    <div class="indicator-signal" id="volume-signal">--</div>
                 </div>
-
-                <!-- Volume Card -->
-                <div class="indicator-card volume-card">
-                    <div class="indicator-header">
-                        <h3>📊 Volume Analysis</h3>
-                        <div class="indicator-value" id="volume-value">--</div>
-                    </div>
-                    <div class="indicator-signal" id="volume-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Analizira trading volumen. Visok volumen potvrđuje trend
-                    </div>
-                </div>
-
-                <!-- Stochastic RSI Card -->
-                <div class="indicator-card stoch-card">
-                    <div class="indicator-header">
-                        <h3>⚡ Stochastic RSI</h3>
-                        <div class="indicator-value" id="stoch-value">--</div>
-                    </div>
-                    <div class="indicator-signal" id="stoch-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Kombinuje stochastic i RSI. Ispod 20 = oversold, iznad 80 = overbought
-                    </div>
-                </div>
-
-                <!-- EMA Card -->
-                <div class="indicator-card ema-card">
-                    <div class="indicator-header">
-                        <h3>📉 EMA (20/50)</h3>
-                        <div class="indicator-value" id="ema-value">--</div>
-                    </div>
-                    <div class="indicator-signal" id="ema-signal">UČITAVA...</div>
-                    <div class="indicator-description">
-                        Eksponencijalni moving average. EMA20 > EMA50 = bullish signal
-                    </div>
+                
+                <div class="analysis-card">
+                    <h3>🎯 Overall</h3>
+                    <div class="indicator-value" id="overall-accuracy">--</div>
+                    <div class="indicator-signal" id="overall-signal">--</div>
                 </div>
             </div>
         </div>
@@ -483,7 +95,34 @@
         <div class="chart-predictions-container">
             <!-- Chart Container -->
             <div class="chart-container">
-                <canvas id="price-chart"></canvas>
+                <canvas id="crypto-chart"></canvas>
+            </div>
+
+            <!-- Predictions Panel -->
+            <div class="predictions-panel">
+                <h2>🔮 AI PREDIKCIJE</h2>
+                <div class="predictions-grid">
+                    <div class="prediction-card">
+                        <h4>15 min</h4>
+                        <div class="prediction-direction" id="pred-15m">--</div>
+                        <div class="prediction-confidence" id="conf-15m">--</div>
+                    </div>
+                    <div class="prediction-card">
+                        <h4>1h</h4>
+                        <div class="prediction-direction" id="pred-1h">--</div>
+                        <div class="prediction-confidence" id="conf-1h">--</div>
+                    </div>
+                    <div class="prediction-card">
+                        <h4>4h</h4>
+                        <div class="prediction-direction" id="pred-4h">--</div>
+                        <div class="prediction-confidence" id="conf-4h">--</div>
+                    </div>
+                    <div class="prediction-card">
+                        <h4>1d</h4>
+                        <div class="prediction-direction" id="pred-1d">--</div>
+                        <div class="prediction-confidence" id="conf-1d">--</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -491,49 +130,12 @@
         <div class="multi-timeframe-section">
             <h2>⏰ MULTI-TIMEFRAME ANALIZA</h2>
             <div class="timeframe-grid" id="timeframe-grid">
-                <!-- Dynamic timeframe panels will be inserted here -->
+                <!-- Timeframe analysis cards will be inserted here -->
             </div>
         </div>
     </div>
 
-    <!-- New Advanced Chat System will be injected here -->
-
-    <!-- Load JavaScript -->
-    <script src="js/ml-accuracy-enhancer.js"></script>
-    <script src="js/system-health.js"></script>
-    <script src="js/debug-panel.js"></script>
-    <script src="js/script.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/chat-v2.js"></script>
-
-    <script>
-        // Toggle Trading Guide funkcija
-        function toggleTradingGuide() {
-            const rules = document.getElementById('trading-rules');
-            const icon = document.querySelector('.toggle-icon');
-            
-            if (rules.style.display === 'none') {
-                rules.style.display = 'block';
-                icon.textContent = '▲';
-            } else {
-                rules.style.display = 'none';
-                icon.textContent = '▼';
-            }
-        }
-
-        // Initialize systems when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Pokretam Crypto Trader sisteme...');
-            
-            // Initialize dashboard first
-            if (typeof TradingDashboard !== 'undefined') {
-                window.dashboard = new TradingDashboard();
-                console.log('✅ Trading Dashboard pokrenut!');
-            }
-            
-            // Auth and chat systems are auto-initialized
-            console.log('✅ Svi sistemi pokretani!');
-        });
-    </script>
+    <!-- Original Working JavaScript -->
+    <script src="js/script_github.js"></script>
 </body>
 </html>
